@@ -4,7 +4,7 @@
         <label class="font-weight-bold">Name *</label>
         <input type="text" class="form-control" name="Name" placeholder="Namen eingeben" required /><br>
         <label class="font-weight-bold">E-Mail *</label>
-        <input type="mail" class="form-control" name="Email" placeholder="E-Mail eingeben" required /><br>
+        <input type="email" class="form-control" name="Email" placeholder="E-Mail eingeben" required /><br>
         <label class="font-weight-bold">Telefonnummer *</label>
         <input type="text" class="form-control" name="Telefon" placeholder="Telefonnummer eingeben"  required /><br>
         <label class="font-weight-bold">Ihre Nachricht *</label>

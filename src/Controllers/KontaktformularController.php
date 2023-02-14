@@ -17,7 +17,7 @@ class KontaktformularController extends Controller
 
     public function danke_formular(){
         $active = 'index';
-        return view('danke_formular')->with(compact('active'));
+        return view('kontaktformular::danke_formular')->with(compact('active'));
     }
 
 }
