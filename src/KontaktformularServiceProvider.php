@@ -20,7 +20,7 @@ class KontaktformularServiceProvider extends ServiceProvider
         $this->publishAssets();
         $this->registerConfig();
         $this->registerTranslations();
-        //$this->registerRoutes();
+        $this->registerRoutes();
 
         /*
         $this->registerCommands();
