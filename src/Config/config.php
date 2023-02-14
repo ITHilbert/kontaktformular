@@ -2,7 +2,7 @@
 
 return [
     'name' => 'Kontaktformular',
-    'mailFrom' => 'kontaktformular@it-hilbert.com',
-    'mailTo'   => 'kontakt@it-hilbert.com',
+    'mailFrom' => 'kontaktformular@from.com',
+    'mailTo'   => 'kontakt@to.com',
     'subject'  => 'Anfrage von XXX',
 ];

@@ -1,6 +1,6 @@
 <?php
 
-use ITHilbert\Kontaktformular\Http\Controllers\KontaktformularController;
+use ITHilbert\Kontaktformular\Controllers\KontaktformularController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Route;
 //##############################################
 
 //Anfrage Kontaktformular Senden
-Route::any('anfrage', [KontaktformularController::class, 'anfrage'])->middleware('web')->name('anfrage');
-Route::get('danke-formular', [KontaktformularController::class, 'danke_formular'])->name('danke_formular');
-
+Route::middleware('web')->group(function () {
+    Route::any('anfrage', [KontaktformularController::class, 'anfrage'])->name('anfrage');
+    Route::get('danke-formular', [KontaktformularController::class, 'danke_formular'])->name('danke_formular');
+});
 
