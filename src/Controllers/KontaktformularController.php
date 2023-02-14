@@ -10,6 +10,16 @@ class KontaktformularController extends Controller
 {
 
     public function anfrage(Request $request){
+        $request->validate([
+            'Name' => 'required',
+            'Email' => 'required',
+            'Telefon' => 'required',
+            'Nachricht' => 'required',
+            'Datenverarbeitung' => 'required',
+            'site' => 'required',
+        ]);
+
+
         Mail::to(config('kontaktformular.mailTo'))->send(new Anfrage($request));
 
         return redirect(route('danke_formular'));

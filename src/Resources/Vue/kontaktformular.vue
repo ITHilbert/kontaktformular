@@ -1,6 +1,7 @@
 <template>
     <form method="POST" v-bind:action="route" enctype="multipart/form-data">
         <input type="hidden" name="_token" v-bind:value="csrf" />
+        <input type="hidden" name="site" v-bind:value="currentUrl" />
         <label class="font-weight-bold">Name *</label>
         <input type="text" class="form-control" name="Name" placeholder="Namen eingeben" required /><br>
         <label class="font-weight-bold">E-Mail *</label>
@@ -34,6 +35,13 @@ export default {
     },
     mounted() {
         this.csrf = document.querySelector('meta[name="csrf-token"]').content;
+    },
+    computed: {
+        currentUrl() {
+            return window.location.href;
+            // or: return this.$route.path;
+            // or, with mode: 'history': return this.$route.fullPath;
+        }
     }
 }
 </script>

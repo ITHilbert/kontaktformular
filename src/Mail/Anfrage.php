@@ -34,7 +34,7 @@ class Anfrage extends Mailable
         $this->telefon = $request->Telefon;
         $this->mitteilung = $request->Nachricht;
         $this->datenverarbeitung = $request->Datenverarbeitung;
-        $this->fromSite = url()->previous();
+        $this->fromSite = $request->site;
 
         if(isset($request->Datei)){
             $this->file = $request->Datei;
