@@ -10,7 +10,7 @@
         <input type="text" class="form-control" name="Telefon" placeholder="Telefonnummer eingeben"  required /><br>
         <label for="Nachricht" class="font-weight-bold">Ihre Nachricht *</label>
         <textarea class="form-control" name="Nachricht" placeholder="Hier Ihre Nachricht eingeben ..." required ></textarea><br>
-        <label ffor="[name='Datei']" class="font-weight-bold">Datei Anhängen (optional)</label><br>
+        <label for="[name='Datei']" class="font-weight-bold">Datei Anhängen (optional)</label><br>
         <input type="file" name="Datei" /><br>
 
         <label class="font-weight-bold">
