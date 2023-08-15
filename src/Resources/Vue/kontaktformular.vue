@@ -3,13 +3,13 @@
         <input type="hidden" name="_token" v-bind:value="csrf" />
         <input type="hidden" name="site" v-bind:value="currentUrl" />
         <label for="Name" class="font-weight-bold">Name *</label>
-        <input type="text" class="form-control" name="Name" placeholder="Namen eingeben" required value="aaa" /><br>
+        <input type="text" class="form-control" name="Name" placeholder="Namen eingeben" required /><br>
         <label for="Email" class="font-weight-bold">E-Mail *</label>
-        <input type="email" class="form-control" name="Email" placeholder="E-Mail eingeben" required value="aaa@aaa.de" /><br>
+        <input type="email" class="form-control" name="Email" placeholder="E-Mail eingeben" required /><br>
         <label for="Telefon" class="font-weight-bold">Telefonnummer *</label>
-        <input type="text" class="form-control" name="Telefon" placeholder="Telefonnummer eingeben"  required value="aaa" /><br>
+        <input type="text" class="form-control" name="Telefon" placeholder="Telefonnummer eingeben"  required /><br>
         <label for="Nachricht" class="font-weight-bold">Ihre Nachricht *</label>
-        <textarea class="form-control" name="Nachricht" placeholder="Hier Ihre Nachricht eingeben ..." required >aaa</textarea><br>
+        <textarea rows="4" class="form-control" name="Nachricht" placeholder="Hier Ihre Nachricht eingeben ..." required ></textarea><br>
         <label class="font-weight-bold">Datei Anhängen (optional)<br>
         <input type="file" name="Datei" /></label><br>
 
