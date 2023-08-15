@@ -3,43 +3,26 @@
 namespace ITHilbert\Kontaktformular\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Http\Request;
+use ITHilbert\Kontaktformular\Models\Kontaktformular;
 
 class Anfrage extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $name;
-    public $email;
-    public $telefon;
-    public $mitteilung;
-    public $datenverarbeitung;
-    private $file;
-    public $fileName;
-    public $fromSite;
-
+    public Kontaktformular $kontakt;
+    public string $fileUrl;
 
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct(Request $request)
+    public function __construct(Kontaktformular $kontakt)
     {
-        $this->name = $request->Name;
-        $this->email = $request->Email;
-        $this->telefon = $request->Telefon;
-        $this->mitteilung = $request->Nachricht;
-        $this->datenverarbeitung = $request->Datenverarbeitung;
-        $this->fromSite = $request->site;
-
-        if(isset($request->Datei)){
-            $this->file = $request->Datei;
-            $this->fileName = $request->Datei->getClientOriginalName();
-        }
+        $this->kontakt = $kontakt;
+        $this->fileUrl = $kontakt->getFileUrl();
     }
 
     /**
@@ -49,20 +32,9 @@ class Anfrage extends Mailable
      */
     public function build()
     {
-        if(isset($this->file)){
-            return $this->from(config('kontaktformular.mailFrom'))
-                        ->subject(config('kontaktformular.subject'))
-                        ->replyTo($this->email)
-                        ->view('kontaktformular::mail.anfrage')
-                        ->attach($this->file, [
-                            'as' => $this->fileName,
-                        ]);
-        }else{
-            return $this->from(config('kontaktformular.mailFrom'))
-                        ->subject(config('kontaktformular.subject'))
-                        ->replyTo($this->email)
-                        ->view('kontaktformular::mail.anfrage');
-        }
-        //->subject('Welcome!');
+        return $this->from(config('kontaktformular.mailFrom'))
+                    ->subject(config('kontaktformular.subject') .' ['. $this->kontakt->nummer .']')
+                    ->replyTo($this->kontakt->email)
+                    ->view('kontaktformular::mail.anfrage');
     }
 }

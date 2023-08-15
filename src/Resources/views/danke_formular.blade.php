@@ -14,7 +14,7 @@
         <div class="row">
             <div class="col-md-10 mb-10">
                 <h2>Vielen Dank für Ihre Anfrage.</h2>
-                <p>Wir haben soeben Ihre Anfrage via Email erhalten. Wir melden uns bei Ihnen so schnell wie möglich.</p>
+                <p>Wir haben Ihre Anfrage via Email erhalten. Wir melden uns bei Ihnen so schnell wie möglich.</p>
                 <p>Viele Grüße</p>
                 <p>
                     Ihr Team von

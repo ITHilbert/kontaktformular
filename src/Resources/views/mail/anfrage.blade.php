@@ -1,9 +1,12 @@
 <h1>Kontaktformular</h1>
-Name: {{ $name }}<br>
-E-Mail: {{ $email }}<br>
-Telefon: {{ $telefon }}<br>
-Mitteilung: {{ $mitteilung }}<br>
-Datei: {{ $fileName }}<br>
-Site: {{ $fromSite }}<br>
-Datenverarbeitung: {{ $datenverarbeitung }}<br>
+Nummer: {{ $kontakt->nummer }}<br>
+Name: {{ $kontakt->name }}<br>
+E-Mail: <a href="mailto:{{ $kontakt->email }}">{{ $kontakt->email }}</a><br>
+Telefon: {{ $kontakt->telefon }}<br>
+Mitteilung: {{ $kontakt->mitteilung }}<br>
+@if($kontakt->filename)
+    Datei: <a href="{{ $fileUrl }}">{{$kontakt->filename}}.{{$kontakt->filetype}} - einmal Link</a><br>
+@endif
+Datenverarbeitung: {{ $kontakt->datenverarbeitung }}<br>
+Site: {{ $kontakt->url }}<br>
 

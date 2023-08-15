@@ -3,18 +3,18 @@
         <input type="hidden" name="_token" v-bind:value="csrf" />
         <input type="hidden" name="site" v-bind:value="currentUrl" />
         <label for="Name" class="font-weight-bold">Name *</label>
-        <input type="text" class="form-control" name="Name" placeholder="Namen eingeben" required /><br>
+        <input type="text" class="form-control" name="Name" placeholder="Namen eingeben" required value="aaa" /><br>
         <label for="Email" class="font-weight-bold">E-Mail *</label>
-        <input type="email" class="form-control" name="Email" placeholder="E-Mail eingeben" required /><br>
+        <input type="email" class="form-control" name="Email" placeholder="E-Mail eingeben" required value="aaa@aaa.de" /><br>
         <label for="Telefon" class="font-weight-bold">Telefonnummer *</label>
-        <input type="text" class="form-control" name="Telefon" placeholder="Telefonnummer eingeben"  required /><br>
+        <input type="text" class="form-control" name="Telefon" placeholder="Telefonnummer eingeben"  required value="aaa" /><br>
         <label for="Nachricht" class="font-weight-bold">Ihre Nachricht *</label>
-        <textarea class="form-control" name="Nachricht" placeholder="Hier Ihre Nachricht eingeben ..." required ></textarea><br>
+        <textarea class="form-control" name="Nachricht" placeholder="Hier Ihre Nachricht eingeben ..." required >aaa</textarea><br>
         <label class="font-weight-bold">Datei Anhängen (optional)<br>
         <input type="file" name="Datei" /></label><br>
 
         <label class="font-weight-bold">
-            <input type="checkbox" name="Datenverarbeitung" class="form-control" required>
+            <input type="checkbox" name="Datenverarbeitung" required>
             Ich stimme der Verarbeitung meiner Daten zu (<a href="https://www.it-hilbert.com/datenschutz">Datenschutz-Informationen)</a>*
         </label><br>
 
