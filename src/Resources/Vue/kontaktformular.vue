@@ -14,7 +14,7 @@
         <input type="file" name="Datei" /></label><br>
 
         <label class="font-weight-bold">
-            <input type="checkbox" name="Datenverarbeitung" required>
+            <input type="checkbox" name="datenverarbeitung" value="1" required>
             Ich stimme der Verarbeitung meiner Daten zu (<a href="https://www.it-hilbert.com/datenschutz">Datenschutz-Informationen)</a>*
         </label><br>
 

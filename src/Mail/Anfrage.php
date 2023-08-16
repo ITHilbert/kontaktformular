@@ -13,6 +13,7 @@ class Anfrage extends Mailable
 
     public Kontaktformular $kontakt;
     public string $fileUrl;
+    public string $title;
 
     /**
      * Create a new message instance.
@@ -23,6 +24,7 @@ class Anfrage extends Mailable
     {
         $this->kontakt = $kontakt;
         $this->fileUrl = $kontakt->getFileUrl();
+        $this->title = config('kontaktformular.subject') .' ['. $kontakt->nummer .']';
     }
 
     /**
@@ -35,6 +37,7 @@ class Anfrage extends Mailable
         return $this->from(config('kontaktformular.mailFrom'))
                     ->subject(config('kontaktformular.subject') .' ['. $this->kontakt->nummer .']')
                     ->replyTo($this->kontakt->email)
-                    ->view('kontaktformular::mail.anfrage');
+                    ->view('kontaktformular::mail.anfrage')
+                    ->text('kontaktformular::mail.anfrage_plain');
     }
 }

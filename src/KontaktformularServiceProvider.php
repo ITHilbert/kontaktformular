@@ -4,6 +4,7 @@ namespace ITHilbert\Kontaktformular;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\Compilers\BladeCompiler;
+use ITHilbert\Kontaktformular\Commands\KontaktformularCommand;
 
 class KontaktformularServiceProvider extends ServiceProvider
 {
@@ -21,9 +22,10 @@ class KontaktformularServiceProvider extends ServiceProvider
         $this->registerConfig();
         $this->registerTranslations();
         $this->registerRoutes();
+        $this->registerCommands();
 
         /*
-        $this->registerCommands();
+
         $this->registerFactories();
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
         */
@@ -59,8 +61,7 @@ class KontaktformularServiceProvider extends ServiceProvider
      */
     protected function registerCommands()
     {
-        /* $this->commands( \ITHilbert\Site\App\Console\Commands\Command::class ); */
-
+         $this->commands( KontaktformularCommand::class );
     }
 
     /**

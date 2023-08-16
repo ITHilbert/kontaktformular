@@ -18,7 +18,7 @@ class KontaktformularController extends Controller
             'Email' => 'required',
             'Telefon' => 'required',
             'Nachricht' => 'required',
-            'Datenverarbeitung' => 'required',
+            'datenverarbeitung' => 'required',
             'site' => 'required',
         ]);
 
@@ -27,7 +27,7 @@ class KontaktformularController extends Controller
         $kontakt->email = $request->Email;
         $kontakt->telefon = $request->Telefon;
         $kontakt->nachricht = $request->Nachricht;
-        $kontakt->datenverarbeitung = $request->Datenverarbeitung;
+        $kontakt->datenverarbeitung = $request->datenverarbeitung;
         $kontakt->url = $request->site;
 
         // Prüfen, ob eine Datei hochgeladen wurde
@@ -42,9 +42,9 @@ class KontaktformularController extends Controller
                 $originalNameOhneEndung = str_replace('.' . $request->file('Datei')->extension(), '', $originalName);
 
                 // Datei speichern
-                $path = $request->Datei->store('uploads');
+                $path = $request->Datei->store('kontaktformular');
                 //Path ohne uploads und Dateiendung
-                $path = str_replace('uploads/', '', $path);
+                $path = str_replace('kontaktformular/', '', $path);
                 //Dateiendung ermitteln
                 $dateityp = $request->Datei->extension();
                 //Datei ohne Endung
@@ -53,18 +53,18 @@ class KontaktformularController extends Controller
                 if($dateityp != 'zip'){
                     //Datei zippen und speichern
                     $zip = new \ZipArchive();
-                    $zip->open(storage_path('app/uploads/' . $path . '.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-                    $zip->addFile(storage_path('app/uploads/' . $path . '.' . $dateityp), $originalName);
+                    $zip->open(storage_path('app/kontaktformular/' . $path . '.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+                    $zip->addFile(storage_path('app/kontaktformular/' . $path . '.' . $dateityp), $originalName);
                     $zip->close();
 
                     //Ungezippte Datei löschen
-                    unlink(storage_path('app/uploads/' . $path . '.' . $dateityp));
+                    unlink(storage_path('app/kontaktformular/' . $path . '.' . $dateityp));
                 }
 
-                $kontakt->filename = $originalNameOhneEndung;
-                $kontakt->filehash = $path;
-                $kontakt->filetype = $dateityp;
-                $kontakt->filesize = round($request->Datei->getSize() /(1024*1024),2);
+                $kontakt->file_name = $originalNameOhneEndung;
+                $kontakt->file_hash = $path;
+                $kontakt->file_type = $dateityp;
+                $kontakt->file_size = round($request->Datei->getSize() /(1024*1024),2);
             } else {
                 return back()->with('error', 'Fehler beim Hochladen der Datei.');
             }
@@ -86,26 +86,38 @@ class KontaktformularController extends Controller
      */
     public function file_download(string $hash,string $name, int $id){
         $kontakt = Kontaktformular::find($id);
-        if($kontakt->filehash != $hash){
-            return back()->with('error', 'Fehler beim Download der Datei.');
+        if($kontakt->file_hash != $hash){
+            return 'Fehler beim Download der Datei.';
+            //return back()->with('error', 'Fehler beim Download der Datei.');
         }
-        if($kontakt->filename != $name){
-            return back()->with('error', 'Fehler beim Download der Datei.');
+        if($kontakt->file_name != $name){
+            return 'Fehler beim Download der Datei.';
+            //return back()->with('error', 'Fehler beim Download der Datei.');
         }
 
 
-        $path = storage_path('app/uploads/' . $hash . '.zip');
+        $path = storage_path('app/kontaktformular/' . $hash . '.zip');
         //Prüfen ob Datei existiert
         if(!file_exists($path)){
-            return back()->with('error', 'Datei nicht mehr vorhanden.');
-            //return 'Datei nicht mehr vorhanden.';
+            //return back()->with('error', 'Datei nicht mehr vorhanden.');
+            return 'Datei nicht mehr vorhanden.';
         }
 
+        //Protokollieren wann die Datei heruntergeladen wurde
+        $kontakt->file_downloaded_at = date('Y-m-d H:i:s');
+        $kontakt->file_deleted_at = date('Y-m-d H:i:s');
+        $kontakt->update();
 
         //Datei downloaden und löschen
         return response()->download($path,$name .'.zip')->deleteFileAfterSend(true);
     }
 
+
+    /**
+     * Danke Formular öffnen
+     *
+     * @return void
+     */
     public function danke_formular()
     {
         $active = 'index';

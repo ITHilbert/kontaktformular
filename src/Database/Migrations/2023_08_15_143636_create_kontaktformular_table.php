@@ -21,11 +21,12 @@ return new class extends Migration
             $table->string('telefon');
             $table->longText('nachricht');
             $table->boolean('datenverarbeitung')->default(false);
-            $table->string('filename')->nullable();
-            $table->string('filetype')->nullable();
-            $table->string('filehash')->nullable();
-            $table->string('filesize')->nullable();
-            $table->date('filedownload_at')->nullable();
+            $table->string('file_name')->nullable();
+            $table->string('file_type')->nullable();
+            $table->string('file_hash')->nullable();
+            $table->string('file_size')->nullable();
+            $table->timestamp('file_downloaded_at')->nullable();  //Wann wurde die Datei heruntergeladen und gelöscht
+            $table->timestamp('file_deleted_at')->nullable();     //Wann wurde die Datei gelöscht
             $table->timestamps();
         });
     }

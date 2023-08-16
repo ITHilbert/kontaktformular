@@ -38,13 +38,22 @@ class Kontaktformular extends Model
         return $maxNummer + 1;
     }
 
+    /**
+     * Ermittelt die URL zum Download der Datei
+     *
+     * @return void
+     */
     public function getFileUrl(){
         $url = config('kontaktformular.fileDownloadUrl');
         //Prüfen ob $url auf / endet
         if(substr($url, -1) != '/'){
             $url .= '/';
         }
-        return $url . $this->filehash .'/' . $this->filename .'/'. $this->id;
+        return $url . $this->file_hash .'/' . $this->file_name .'/'. $this->id;
+    }
+
+    public function getHashWithTimestamd(){
+        return $this->filehash . '_' . $this->created_at->timestamp;
     }
 
 }
