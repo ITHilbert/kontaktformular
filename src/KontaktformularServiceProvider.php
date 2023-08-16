@@ -23,12 +23,7 @@ class KontaktformularServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerRoutes();
         $this->registerCommands();
-
-        /*
-
-        $this->registerFactories();
         $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
-        */
 
     }
 
