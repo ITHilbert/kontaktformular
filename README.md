@@ -41,6 +41,12 @@ Hinweis: Es muss noch im "vue-app" div sein.
 @include('kontaktformular::show')
 ```
 
+## .gitignore
+Die Dateien sollen nicht mit bei git gespeichert werden. Deshalb fügen Sie bitte folgendes in die .gitignore ein.
+```
+/storage/app/kontaktformular/
+```
+
 
 ### ToDo
 
