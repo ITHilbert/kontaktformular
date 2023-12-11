@@ -24,7 +24,7 @@
     @if($kontakt->file_name)
         <tr>
             <td><b>Datei:</b></td>
-            <td><a href="{{ $fileUrl }}">{{$kontakt->file_name}}.{{$kontakt->file_type}} - einmal Link</a></td>
+            <td><a href="{{ $fileUrl }}">{{$kontakt->file_name}}.{{$kontakt->file_type}}</a></td>
         </tr>
     @endif
     <tr>

@@ -105,11 +105,11 @@ class KontaktformularController extends Controller
 
         //Protokollieren wann die Datei heruntergeladen wurde
         $kontakt->file_downloaded_at = date('Y-m-d H:i:s');
-        $kontakt->file_deleted_at = date('Y-m-d H:i:s');
+        //$kontakt->file_deleted_at = date('Y-m-d H:i:s');
         $kontakt->update();
 
         //Datei downloaden und löschen
-        return response()->download($path,$name .'.zip')->deleteFileAfterSend(true);
+        return response()->download($path,$name .'.zip')->deleteFileAfterSend(false);
     }
 
 
