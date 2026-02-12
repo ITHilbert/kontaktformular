@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
 
 //Anfrage Kontaktformular Senden
 Route::middleware('web')->group(function () {
-    Route::any('anfrage', [KontaktformularController::class, 'anfrage'])->name('anfrage');
+    Route::post('anfrage', [KontaktformularController::class, 'anfrage'])->name('anfrage');
     Route::get('danke-formular', [KontaktformularController::class, 'danke_formular'])->name('danke_formular');
     Route::get('kontaktformular/file/{hash}/{name}/{id}', [KontaktformularController::class, 'file_download'])->name('kontaktformular.file');
 });

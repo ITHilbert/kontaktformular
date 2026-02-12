@@ -15,11 +15,12 @@ class KontaktformularController extends Controller
     {
         $request->validate([
             'Name' => 'required',
-            'Email' => 'required',
+            'Email' => 'required|email',
             'Telefon' => 'required',
             'Nachricht' => 'required',
             'datenverarbeitung' => 'required',
             'site' => 'required',
+            'Datei' => 'nullable|file|max:10240|mimes:pdf,jpg,png,zip,doc,docx,xls,xlsx',
         ]);
 
         $kontakt = new Kontaktformular();
