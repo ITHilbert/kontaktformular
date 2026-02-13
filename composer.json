@@ -1,6 +1,6 @@
 {
     "name": "ithilbert/kontaktformular",
-    "type": "libary",
+    "type": "library",
     "license": "MIT",
     "description": "Mein Kontaktformular mit Verarbeitungscode",
     "keywords": [
@@ -8,11 +8,13 @@
         "laravel",
         "homepage"
     ],
-    "authors": [{
-        "name": "Jörg Hilbert",
-        "homepage": "https://www.it-hilbert.com",
-        "role": "Developer"
-    }],
+    "authors": [
+        {
+            "name": "Jörg Hilbert",
+            "homepage": "https://www.it-hilbert.com",
+            "role": "Developer"
+        }
+    ],
     "homepage": "https://www.it-hilbert.com",
     "minimum-stability": "dev",
     "require": {},
@@ -31,9 +33,7 @@
             "providers": [
                 "ITHilbert\\Kontaktformular\\KontaktformularServiceProvider"
             ],
-            "aliases": {
-
-            }
+            "aliases": {}
         }
     }
 }
