@@ -13,6 +13,11 @@ class KontaktformularController extends Controller
 
     public function anfrage(Request $request)
     {
+        //Honeypot
+        if($request->has('website') && !empty($request->website)){
+            return back()->with('error', 'Spam detected.');
+        }
+
         $request->validate([
             'Name' => 'required',
             'Email' => 'required|email',
@@ -39,15 +44,20 @@ class KontaktformularController extends Controller
 
                 // Originalname der Datei
                 $originalName = $request->file('Datei')->getClientOriginalName();
-                //originalName ohne Dateiendung
-                $originalNameOhneEndung = str_replace('.' . $request->file('Datei')->extension(), '', $originalName);
+                // Sicherer Dateiname (nur Buchstaben, Zahlen, Bindestriche, Unterstriche)
+                $safeName = preg_replace('/[^a-zA-Z0-9\-\_\.]/', '', basename($originalName));
+                
+                //Dateiendung ermitteln
+                $dateityp = $request->Datei->extension();
+                
+                //originalName ohne Dateiendung (sicher)
+                $originalNameOhneEndung = pathinfo($safeName, PATHINFO_FILENAME);
 
                 // Datei speichern
                 $path = $request->Datei->store('kontaktformular');
                 //Path ohne uploads und Dateiendung
                 $path = str_replace('kontaktformular/', '', $path);
-                //Dateiendung ermitteln
-                $dateityp = $request->Datei->extension();
+                
                 //Datei ohne Endung
                 $path = str_replace('.' . $request->Datei->extension(), '', $path);
 
@@ -55,7 +65,7 @@ class KontaktformularController extends Controller
                     //Datei zippen und speichern
                     $zip = new \ZipArchive();
                     $zip->open(storage_path('app/kontaktformular/' . $path . '.zip'), \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
-                    $zip->addFile(storage_path('app/kontaktformular/' . $path . '.' . $dateityp), $originalName);
+                    $zip->addFile(storage_path('app/kontaktformular/' . $path . '.' . $dateityp), $safeName);
                     $zip->close();
 
                     //Ungezippte Datei löschen
