@@ -140,4 +140,15 @@ class KontaktformularController extends Controller
         $active = 'index';
         return view('kontaktformular::danke_formular')->with(compact('active'));
     }
+
+    /**
+     * Bot-Danke Formular öffnen (als Erfolg getarnt, löst keine Analytics aus)
+     *
+     * @return void
+     */
+    public function danke_bot_formular()
+    {
+        $active = 'index';
+        return view('kontaktformular::danke_bot_formular')->with(compact('active'));
+    }
 }
