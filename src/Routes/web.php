@@ -22,6 +22,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('web')->group(function () {
     Route::post('anfrage', [KontaktformularController::class, 'anfrage'])->name('anfrage')->middleware('throttle:6,1');
     Route::get('danke-formular', [KontaktformularController::class, 'danke_formular'])->name('danke_formular');
+    Route::get('danke-bot-formular', [KontaktformularController::class, 'danke_bot_formular'])->name('danke_bot_formular');
     Route::get('kontaktformular/file/{hash}/{name}/{id}', [KontaktformularController::class, 'file_download'])->name('kontaktformular.file');
 });
-

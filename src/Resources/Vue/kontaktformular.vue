@@ -3,7 +3,7 @@
         <input type="hidden" name="_token" v-bind:value="csrf" />
         <input type="hidden" name="site" v-bind:value="currentUrl" />
 
-        <input type="text" name="website" style="display:none !important" tabindex="-1" autocomplete="off">
+        <input type="text" name="fax" class="n-bot" tabindex="-1" autocomplete="off">
         <label for="contact_name" class="font-weight-bold">Name *</label>
         <input type="text" class="form-control" id="contact_name" name="Name" placeholder="Namen eingeben" autocomplete="name" required /><br>
 
@@ -53,5 +53,12 @@ export default {
 </script>
 
 <style>
-
+.n-bot {
+    position: absolute !important;
+    left: -10000px !important;
+    top: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+}
 </style>

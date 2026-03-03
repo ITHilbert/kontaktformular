@@ -13,9 +13,15 @@ class KontaktformularController extends Controller
 
     public function anfrage(Request $request)
     {
-        //Honeypot
-        if($request->has('website') && !empty($request->website)){
-            return back()->with('error', 'Spam detected.');
+        // Honeypot: Möglichst keine Infos geben, einfach so tun als wäre alles okay
+        if($request->has('fax') && !empty($request->fax)){
+            return redirect(route('danke_bot_formular'));
+        }
+
+        // Spam-Schutz für Nachricht: Mindestens 10 Zeichen (ohne Leerzeichen am Rand) und mind. ein Leerzeichen
+        $nachricht = (string) $request->input('Nachricht', '');
+        if (strlen(trim($nachricht)) < 10 || strpos($nachricht, ' ') === false) {
+            return redirect(route('danke_bot_formular'));
         }
 
         $request->validate([
