@@ -1,4 +1,4 @@
-@extends('layouts.master')
+@extends('layouts.masterBot')
 
 @section('head.titel', config('site.firma'). " – Danke für Ihre Nachricht")
 @section('head.keywords', "")
