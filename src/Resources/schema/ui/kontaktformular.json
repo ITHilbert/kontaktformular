@@ -1,0 +1,86 @@
+{
+  "formSchema": {
+    "method": "POST",
+    "action": "route",
+    "enctype": "multipart/form-data"
+  },
+  "dataSchema": {
+    "_token": { "type": "string", "required": true },
+    "site": { "type": "string", "required": false },
+    "fax": { "type": "string", "required": false },
+    "Name": { "type": "string", "required": true },
+    "Email": { "type": "email", "required": true },
+    "Telefon": { "type": "string", "required": true },
+    "Nachricht": { "type": "string", "required": true },
+    "Datei": { "type": "file", "required": false },
+    "datenverarbeitung": { "type": "boolean", "required": true }
+  },
+  "uiSchema": {
+    "layout": "vertical",
+    "elements": [
+      {
+        "type": "hidden",
+        "field": "_token",
+        "value": "csrf"
+      },
+      {
+        "type": "hidden",
+        "field": "site",
+        "value": "currentUrl"
+      },
+      {
+        "type": "hidden",
+        "field": "fax",
+        "cssClass": "n-bot",
+        "tabindex": "-1",
+        "autocomplete": "off"
+      },
+      {
+        "type": "input",
+        "field": "Name",
+        "label": "Name *",
+        "placeholder": "Namen eingeben",
+        "autocomplete": "name"
+      },
+      {
+        "type": "input",
+        "field": "Email",
+        "label": "E-Mail *",
+        "placeholder": "E-Mail eingeben",
+        "autocomplete": "email"
+      },
+      {
+        "type": "input",
+        "field": "Telefon",
+        "label": "Telefonnummer *",
+        "placeholder": "Telefonnummer eingeben",
+        "autocomplete": "tel"
+      },
+      {
+        "type": "textarea",
+        "field": "Nachricht",
+        "label": "Ihre Nachricht *",
+        "placeholder": "Hier Ihre Nachricht eingeben ...",
+        "autocomplete": "off",
+        "rows": "4"
+      },
+      {
+        "type": "file",
+        "field": "Datei",
+        "label": "Datei Anhängen (optional)"
+      },
+      {
+        "type": "checkbox",
+        "field": "datenverarbeitung",
+        "label": "Ich stimme der Verarbeitung meiner Daten zu (Datenschutz-Informationen)*",
+        "value": "1",
+        "autocomplete": "off"
+      },
+      {
+        "type": "button",
+        "action": "submit",
+        "label": "Anfrage senden"
+      }
+    ]
+  }
+}
