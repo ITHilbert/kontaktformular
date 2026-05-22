@@ -36,6 +36,7 @@ class KontaktformularServiceProvider extends ServiceProvider
         }
     }
 
+    #[\Override]
     public function register(): void
     {
     }

@@ -17,7 +17,16 @@
     ],
     "homepage": "https://www.it-hilbert.com",
     "minimum-stability": "stable",
-    "require": {},
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^11.0 || ^12.0",
+        "illuminate/database": "^11.0 || ^12.0",
+        "illuminate/http": "^11.0 || ^12.0",
+        "illuminate/mail": "^11.0 || ^12.0",
+        "illuminate/routing": "^11.0 || ^12.0",
+        "illuminate/console": "^11.0 || ^12.0",
+        "ext-zip": "*"
+    },
     "autoload": {
         "psr-4": {
             "ITHilbert\\Kontaktformular\\": "src/"
@@ -25,7 +34,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "ITHilbert\\Kontaktformular\\": "src/"
+            "ITHilbert\\Kontaktformular\\Tests\\": "tests/"
         }
     },
     "extra": {
