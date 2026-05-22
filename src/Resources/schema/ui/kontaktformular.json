@@ -10,7 +10,7 @@
     "fax": { "type": "string", "required": false },
     "Name": { "type": "string", "required": true },
     "Email": { "type": "email", "required": true },
-    "Telefon": { "type": "string", "required": true },
+    "Telefon": { "type": "string", "required": false },
     "Nachricht": { "type": "string", "required": true },
     "Datei": { "type": "file", "required": false },
     "datenverarbeitung": { "type": "boolean", "required": true }
@@ -51,9 +51,10 @@
       },
       {
         "type": "input",
+        "inputType": "tel",
         "field": "Telefon",
-        "label": "Telefonnummer *",
-        "placeholder": "Telefonnummer eingeben",
+        "label": "Telefonnummer",
+        "placeholder": "Telefonnummer eingeben (optional)",
         "autocomplete": "tel"
       },
       {

@@ -10,8 +10,8 @@
         <label for="contact_email" class="font-weight-bold">E-Mail *</label>
         <input type="email" class="form-control" id="contact_email" name="Email" placeholder="E-Mail eingeben" autocomplete="email" required /><br>
 
-        <label for="contact_telefon" class="font-weight-bold">Telefonnummer *</label>
-        <input type="text" class="form-control" id="contact_telefon" name="Telefon" placeholder="Telefonnummer eingeben" autocomplete="tel"  required /><br>
+        <label for="contact_telefon" class="font-weight-bold">Telefonnummer</label>
+        <input type="tel" class="form-control" id="contact_telefon" name="Telefon" placeholder="Telefonnummer eingeben (optional)" autocomplete="tel" /><br>
 
         <label for="contact_nachricht" class="font-weight-bold">Ihre Nachricht *</label>
         <textarea rows="4" class="form-control" name="Nachricht" id="contact_nachricht" placeholder="Hier Ihre Nachricht eingeben ..." autocomplete="off" required ></textarea><br>

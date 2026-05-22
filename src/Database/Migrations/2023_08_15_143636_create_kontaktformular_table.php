@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('url');
             $table->string('name');
             $table->string('email');
-            $table->string('telefon');
+            $table->string('telefon')->nullable();
             $table->longText('nachricht');
             $table->boolean('datenverarbeitung')->default(false);
             $table->string('file_name')->nullable();

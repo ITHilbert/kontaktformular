@@ -13,10 +13,12 @@
         <td><b>E-Mail:</b></td>
         <td><a href="mailto:{{ $kontakt->email }}">{{ $kontakt->email }}</a></td>
     </tr>
-    <tr>
-        <td><b>Telefon:</b></td>
-        <td>{{ $kontakt->telefon }}</td>
-    </tr>
+    @if(!empty($kontakt->telefon))
+        <tr>
+            <td><b>Telefon:</b></td>
+            <td>{{ $kontakt->telefon }}</td>
+        </tr>
+    @endif
     <tr>
         <td><b>Mitteilung:</b></td>
         <td>{{ $kontakt->nachricht }}</td>
