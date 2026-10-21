@@ -142,6 +142,7 @@ final class LoeschfristTest extends TestCase
     public function test_juengere_anfragen_bleiben_unveraendert(): void
     {
         config()->set('kontaktformular.anfragen_loeschen_nach_tagen', 60);
+        config()->set('kontaktformular.dateien_loeschen_nach_tagen', 90);
         $jung = $this->anfrage(59, 'hash-jung');
         $ohneAnhang = $this->anfrage(10);
 
