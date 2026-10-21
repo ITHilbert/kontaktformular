@@ -27,8 +27,33 @@ return [
     'mailTo'          => env('KONTAKTFORMULAR_MAIL_TO',   env('MAIL_TO_ADDRESS')),
     'subject'         => env('KONTAKTFORMULAR_SUBJECT', 'Anfrage von ' . env('APP_NAME')),
     'fileDownloadUrl' => env('APP_URL') . '/kontaktformular/file/',
+    'dateien_loeschen_nach_tagen'  => env('KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN', 30),
+    'anfragen_loeschen_nach_tagen' => env('KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN'),
 ];
 ```
+
+## Löschfristen
+
+| Einstellung (`.env`) | Standard | Wirkung |
+|---|---|---|
+| `KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN` | `30` | Anhänge älter als die Frist werden gelöscht, die Anfrage bleibt (`file_deleted_at` wird gesetzt). |
+| `KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN` | nicht gesetzt | Anfragen älter als die Frist werden samt Anhang gelöscht. Ohne Wert bleiben Anfragen dauerhaft erhalten. |
+
+Beide Werte müssen positive ganze Zahlen sein. Bei ungültigem Wert bricht der Command mit Fehlermeldung ab (Exit-Code 1) und löscht nichts.
+
+**Achtung:** `KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN=` ohne Wert gilt als ungültig – dann stoppt auch die Löschung der Anhänge. Die Zeile entweder mit Zahl setzen oder ganz weglassen.
+
+Anhänge liegen unter `storage/app/kontaktformular/`. Zeigt die Disk `local` des Projekts auf `storage/app/private` (Laravel-11-Skelett), findet der Command die Dateien dort nicht.
+
+## Command
+
+```bash
+php artisan kontaktformular:delete_old_files
+```
+
+Löscht zuerst die Anfragen nach der Anfragenfrist, danach die Anhänge nach der Dateifrist, und gibt die Zahl gelöschter Anhänge und Anfragen aus. Eine bereits fehlende Anhang-Datei ist kein Fehler.
+
+**Wichtig:** Das Paket plant den Command nicht selbst ein. Das Projekt muss ihn im Scheduler eintragen, z. B. `Schedule::command('kontaktformular:delete_old_files')->daily();`.
 
 ## Routen
 
