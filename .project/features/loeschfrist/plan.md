@@ -9,4 +9,4 @@ Branch: `feature/loeschfrist` · Spec: `spec.md`
 - [ ] T4 REVIEW (reviewer) → `pruefung.md`
 
 ## Stand
-Spec geschrieben, wartet auf Freigabe durch den User.
+Spec freigegeben (User, 2026-10-21). T1 läuft.
