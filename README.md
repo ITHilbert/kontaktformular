@@ -41,6 +41,10 @@ return [
 
 Beide Werte müssen positive ganze Zahlen sein. Bei ungültigem Wert bricht der Command mit Fehlermeldung ab (Exit-Code 1) und löscht nichts.
 
+**Achtung:** `KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN=` ohne Wert gilt als ungültig – dann stoppt auch die Löschung der Anhänge. Die Zeile entweder mit Zahl setzen oder ganz weglassen.
+
+Anhänge liegen unter `storage/app/kontaktformular/`. Zeigt die Disk `local` des Projekts auf `storage/app/private` (Laravel-11-Skelett), findet der Command die Dateien dort nicht.
+
 ## Command
 
 ```bash
