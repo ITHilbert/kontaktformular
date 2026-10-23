@@ -8,7 +8,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
-use Tests\TestCase;
+use ITHilbert\Kontaktformular\Tests\TestCase;
 
 final class LoeschfristTest extends TestCase
 {

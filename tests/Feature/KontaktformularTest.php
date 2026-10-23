@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
-use Tests\TestCase;
+use ITHilbert\Kontaktformular\Tests\TestCase;
 
 final class KontaktformularTest extends TestCase
 {
