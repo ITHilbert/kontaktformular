@@ -7,4 +7,5 @@
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
+- [download-route](download-route/plan.md) — Tests für die Download-Route (404/410/Download) (2026-10-23)
 - [loeschfrist](loeschfrist/plan.md) — Einstellbare Löschfrist für Anfragen und Anhänge (2026-10-21)
