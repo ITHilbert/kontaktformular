@@ -7,7 +7,7 @@ namespace ITHilbert\Kontaktformular\Tests\Feature;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
-use Tests\TestCase;
+use ITHilbert\Kontaktformular\Tests\TestCase;
 
 /**
  * Absicherung des bestehenden Verhaltens von KontaktformularController::file_download
