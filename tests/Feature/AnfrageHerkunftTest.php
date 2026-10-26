@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ITHilbert\Kontaktformular\Tests\Feature;
 
+use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
@@ -1359,5 +1360,370 @@ final class AnfrageHerkunftTest extends TestCase
         $this->assertKlickIdWertNieInMail($mail, 'KODIERT42');
         $this->assertSame('https://example.com/a?utm_source=google', DB::table('kontaktformular')->orderByDesc('id')->value('url'));
         $this->assertGespeichertOhneSteuerzeichen();
+    }
+
+    // ------------------------------------------------------------------
+    // Bugfix 3: Namensformen, die PHP als Klick-ID liest (AK6, Randfall 10) und U+2028/U+2029 (AK4)
+    // ------------------------------------------------------------------
+
+    private const KLICK_ID_NAMEN = ['gclid', 'gbraid', 'wbraid'];
+
+    /**
+     * Wie PHP den Parameternamen liest: Name der Klick-ID mit String-Wert, sonst null.
+     * Maßgeblich ist der Parser von Request::create() (wie bei einem echten Request).
+     */
+    private function phpKlickId(string $query): ?string
+    {
+        $gelesen = Request::create('https://example.com/a?'.$query)->query->all();
+
+        foreach (self::KLICK_ID_NAMEN as $name) {
+            if (isset($gelesen[$name]) && is_string($gelesen[$name])) {
+                return $name;
+            }
+        }
+
+        return null;
+    }
+
+    private function gespeicherteUrl(): string
+    {
+        return (string) DB::table('kontaktformular')->orderByDesc('id')->value('url');
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string, 2: bool}>
+     */
+    public static function regressionNamensformen(): array
+    {
+        $formen = [
+            '+%s' => true,
+            '%%20%s' => true,
+            '++%s' => true,
+            '%s%%00' => true,
+            '%%2B%s' => false, // PHP liest "+gclid": keine Klick-ID
+        ];
+
+        $faelle = [];
+        foreach (self::KLICK_ID_NAMEN as $name) {
+            foreach ($formen as $muster => $erkannt) {
+                $paar = sprintf($muster, $name);
+                $faelle[$paar] = [$paar, $name, $erkannt];
+            }
+        }
+
+        return $faelle;
+    }
+
+    // AK6 (Regression)
+    #[DataProvider('regressionNamensformen')]
+    public function test_name_variante_nur_in_site_wird_wie_von_php_gelesen_entfernt(string $paar, string $name, bool $erkannt): void
+    {
+        $this->assertSame($erkannt ? $name : null, $this->phpKlickId($paar.'=WERT42'), 'Annahme über PHPs Parser');
+        $this->besuche('/startseite?utm_source=google&utm_medium=cpc')->assertOk();
+
+        $site = "https://example.com/a?a=1&{$paar}=WERT42&b=2#anker";
+        $mail = $this->sendeAnfrage(site: $site);
+        $inhalt = $this->inhalt($mail);
+
+        if ($erkannt) {
+            $erwartet = 'https://example.com/a?a=1&b=2#anker';
+            $this->assertKlickIdWertNieInMail($mail, 'WERT42');
+        } else {
+            $erwartet = $site; // AK8: ohne Klick-ID unverändert
+        }
+        $this->assertSame($erwartet, $this->gespeicherteUrl());
+        $this->assertSame($erwartet, $this->siteText($inhalt['text']));
+        $this->assertSame($erwartet, $this->htmlWert($inhalt['html'], 'Site:'));
+    }
+
+    // AK6 (Regression)
+    #[DataProvider('regressionNamensformen')]
+    public function test_name_variante_in_request_query_und_site_wird_erfasst_aber_nie_ausgegeben(string $paar, string $name, bool $erkannt): void
+    {
+        $b = 'https://example.com/a';
+        $this->besuche("/startseite?{$paar}=WERT42&utm_source=google&x=1")->assertOk();
+
+        $mail = $this->sendeAnfrage(site: "{$b}?{$paar}=WERT42&utm_source=google&x=1");
+        $inhalt = $this->inhalt($mail);
+
+        if (! $erkannt) {
+            // Gegenprobe der Gegenprobe: keine Klick-ID, nichts erfasst, Site unverändert (AK8)
+            $this->assertNotContains('WERT42', $this->herkunftWerte());
+            $this->assertSame('-', $this->textWert($inhalt['text'], 'Klick-ID:'));
+            $this->assertSame("{$b}?{$paar}=WERT42&utm_source=google&x=1", $this->gespeicherteUrl());
+
+            return;
+        }
+
+        // Gegenprobe: Middleware hat den Wert erfasst, Mail nennt nur den Namen
+        $this->assertContains('WERT42', $this->herkunftWerte());
+        $this->assertSame($name, $this->textWert($inhalt['text'], 'Klick-ID:'));
+        $this->assertSame($name, $this->htmlWert($inhalt['html'], 'Klick-ID:'));
+        $this->assertSame('google_ads', $this->textWert($inhalt['text'], 'Herkunft:'));
+
+        $this->assertKlickIdWertNieInMail($mail, 'WERT42');
+        $this->assertSame("{$b}?utm_source=google&x=1", $this->gespeicherteUrl());
+        $this->assertSame("{$b}?utm_source=google&x=1", $this->siteText($inhalt['text']));
+        $this->assertSame("{$b}?utm_source=google&x=1", $this->htmlWert($inhalt['html'], 'Site:'));
+    }
+
+    // AK6 (Regression)
+    #[DataProvider('regressionNamensformen')]
+    public function test_name_variante_nur_in_request_query_nennt_in_der_mail_nur_den_namen(string $paar, string $name, bool $erkannt): void
+    {
+        $this->besuche("/startseite?{$paar}=WERT42")->assertOk();
+
+        $mail = $this->sendeAnfrage(site: 'http://localhost/startseite');
+
+        if ($erkannt) {
+            $this->assertContains('WERT42', $this->herkunftWerte());
+            $this->assertHerkunftZeilen($mail, 'google_ads', '/startseite', '-', $name);
+        } else {
+            $this->assertNotContains('WERT42', $this->herkunftWerte());
+            $this->assertHerkunftZeilen($mail, 'direkt', '/startseite', '-', '-');
+        }
+        $this->assertKlickIdWertNieInMail($mail, 'WERT42');
+        $this->assertSame('http://localhost/startseite', $this->gespeicherteUrl());
+    }
+
+    /**
+     * Namensformen für den Invarianten-Test; `{n}` steht für gclid, gbraid, wbraid.
+     *
+     * @return array<string, array{0: string}>
+     */
+    public static function namensformen(): array
+    {
+        $formen = [
+            '+{n}', '%20{n}', '++{n}', '+%20{n}', '%2B{n}', '{n}%00', '{n}%00x', '%00{n}', '{n}%00[]',
+            '{n}[]', '{n}[x]', '{n}%5B%5D', '{n}%5Bx', '{n}[', '{n}%20', ' {n}', '{n}+', '{n}.', '.{n}',
+            '%09{n}', '{n}%09', '%0A{n}', '{n}%0A', '%0D{n}', '%C2%A0{n}', '{n}%C2%A0',
+            '{n}', '{N}', '{ENC}', '{ENCUP}', '{HEX1}', '{HEX1UP}', '{DOT}', '{DOTENC}', '{DOUBLE}', '{MIX}',
+        ];
+
+        $faelle = [];
+        foreach (self::KLICK_ID_NAMEN as $name) {
+            foreach ($formen as $form) {
+                $paar = strtr($form, [
+                    '{n}' => $name,
+                    '{N}' => strtoupper($name),
+                    '{ENC}' => '%'.implode('%', str_split(bin2hex($name), 2)),
+                    '{ENCUP}' => strtoupper('%'.implode('%', str_split(bin2hex($name), 2))),
+                    '{HEX1}' => substr($name, 0, 2).'%'.bin2hex($name[2]).substr($name, 3),
+                    '{HEX1UP}' => strtoupper(substr($name, 0, 2).'%'.bin2hex($name[2]).substr($name, 3)),
+                    '{DOT}' => substr($name, 0, 3).'.'.substr($name, 3),
+                    '{DOTENC}' => substr($name, 0, 3).'%2E'.substr($name, 3),
+                    '{DOUBLE}' => substr($name, 0, 2).'%25'.bin2hex($name[2]).substr($name, 3),
+                    '{MIX}' => substr($name, 0, 1).'%'.strtoupper(bin2hex($name[1])).strtoupper(substr($name, 2)),
+                ]);
+                $faelle["{$name}: {$paar}"] = [$paar];
+            }
+        }
+
+        return $faelle;
+    }
+
+    // AK6, AK8, Randfall 10 (Invariante: Erwartung aus PHPs Parser abgeleitet)
+    #[DataProvider('namensformen')]
+    public function test_invariante_namensform_in_query_und_site_wert_nie_in_url_und_mail(string $paar): void
+    {
+        $query = "{$paar}=WERT&x=1";
+        $site = "https://example.com/a?{$query}";
+        $gelesen = $this->phpKlickId($query);
+
+        $this->besuche("/startseite?{$query}")->assertOk();
+        $mail = $this->sendeAnfrage(site: $site);
+        $inhalt = $this->inhalt($mail);
+
+        if ($gelesen !== null) {
+            // Gegenprobe: erfasst, Name genannt, übrige Parameter unverändert
+            $this->assertContains('WERT', $this->herkunftWerte());
+            $this->assertSame($gelesen, $this->textWert($inhalt['text'], 'Klick-ID:'));
+            $this->assertKlickIdWertNieInMail($mail, 'WERT');
+            $this->assertSame('https://example.com/a?x=1', $this->gespeicherteUrl());
+            $this->assertSame('https://example.com/a?x=1', $this->siteText($inhalt['text']));
+        } else {
+            $this->assertSame('-', $this->textWert($inhalt['text'], 'Klick-ID:'));
+            $this->assertNotContains('WERT', $this->herkunftWerte());
+            $this->assertSame($site, $this->gespeicherteUrl());
+            $this->assertSame($site, $this->siteText($inhalt['text']));
+        }
+    }
+
+    // AK6, AK8, Randfall 10 (Invariante: Erwartung aus PHPs Parser abgeleitet)
+    #[DataProvider('namensformen')]
+    public function test_invariante_namensform_nur_in_site_wert_nie_in_url_und_mail(string $paar): void
+    {
+        $query = "a=1&{$paar}=WERT&x=1";
+        $site = "https://example.com/a?{$query}";
+        $gelesen = $this->phpKlickId($query);
+
+        $this->besuche('/startseite?utm_source=google&utm_medium=cpc')->assertOk();
+        $mail = $this->sendeAnfrage(site: $site);
+        $inhalt = $this->inhalt($mail);
+
+        // Gegenprobe: Aufbau greift, die Anfrage ist gespeichert und verschickt
+        $this->assertSame('google_ads', $this->textWert($inhalt['text'], 'Herkunft:'));
+
+        if ($gelesen !== null) {
+            $this->assertKlickIdWertNieInMail($mail, 'WERT');
+            $this->assertSame('https://example.com/a?a=1&x=1', $this->gespeicherteUrl());
+            $this->assertSame('https://example.com/a?a=1&x=1', $this->siteText($inhalt['text']));
+        } else {
+            $this->assertSame($site, $this->gespeicherteUrl());
+            $this->assertSame($site, $this->siteText($inhalt['text']));
+        }
+    }
+
+    // AK6, Randfall 10 (Invariante: Erwartung aus PHPs Parser abgeleitet)
+    #[DataProvider('namensformen')]
+    public function test_invariante_namensform_nur_in_request_query_wert_nie_in_url_und_mail(string $paar): void
+    {
+        $query = "{$paar}=WERT&x=1";
+        $gelesen = $this->phpKlickId($query);
+
+        $this->besuche("/startseite?{$query}")->assertOk();
+        $mail = $this->sendeAnfrage(site: 'http://localhost/startseite');
+        $inhalt = $this->inhalt($mail);
+
+        if ($gelesen !== null) {
+            $this->assertContains('WERT', $this->herkunftWerte());
+            $this->assertSame($gelesen, $this->textWert($inhalt['text'], 'Klick-ID:'));
+            $this->assertSame($gelesen, $this->htmlWert($inhalt['html'], 'Klick-ID:'));
+        } else {
+            $this->assertSame('-', $this->textWert($inhalt['text'], 'Klick-ID:'));
+        }
+        $this->assertKlickIdWertNieInMail($mail, 'WERT');
+        $this->assertSame('http://localhost/startseite', $this->gespeicherteUrl());
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function unicodeZeilentrenner(): array
+    {
+        return [
+            'U+2028 roh' => ["\u{2028}", "\u{2028}"],
+            'U+2029 roh' => ["\u{2029}", "\u{2029}"],
+            'U+2028 kodiert' => ['%E2%80%A8', "\u{2028}"],
+            'U+2029 kodiert' => ['%E2%80%A9', "\u{2029}"],
+        ];
+    }
+
+    /**
+     * Zeilen nach Python-`splitlines()`.
+     *
+     * @return list<string>
+     */
+    private function pythonZeilen(string $text): array
+    {
+        return preg_split('/\r\n|[\n\r\x0B\x0C\x1C-\x1E\x{85}\x{2028}\x{2029}]/u', $text);
+    }
+
+    private function assertKeinUnicodeZeilentrenner(Anfrage $mail): void
+    {
+        $inhalt = $this->inhalt($mail);
+        foreach (['text' => $inhalt['text'], 'html' => $inhalt['html']] as $teil => $wert) {
+            $this->assertSame(0, preg_match('/[\x{2028}\x{2029}]/u', $wert), "U+2028/2029 im {$teil}-Teil");
+        }
+        $this->assertSame(0, preg_match('/[\x{2028}\x{2029}]/u', $this->gespeicherteUrl()), 'U+2028/2029 in Spalte url');
+        foreach ($this->herkunftWerte() as $wert) {
+            $this->assertSame(0, preg_match('/[\x{2028}\x{2029}]/u', $wert), 'U+2028/2029 in Spalte herkunft');
+        }
+        $this->assertSame(0, preg_match('/[\x{2028}\x{2029}]/u', (string) DB::table('kontaktformular')->orderByDesc('id')->value('herkunft')), 'U+2028/2029 im JSON (roh)');
+
+        $referrerZeilen = array_filter(
+            $this->pythonZeilen($inhalt['text']),
+            static fn (string $zeile): bool => str_starts_with(trim(html_entity_decode($zeile)), 'Referrer:'),
+        );
+        $this->assertCount(1, $referrerZeilen, 'Text-Teil (splitlines): Referrer: nicht genau einmal');
+    }
+
+    // AK4 (Regression)
+    #[DataProvider('unicodeZeilentrenner')]
+    public function test_unicode_zeilentrenner_im_pfad_erzeugen_keine_zusaetzliche_zeile(string $form, string $zeichen): void
+    {
+        // Gegenprobe: sauberer Wert wird unverändert übernommen
+        $this->besuche('/seite/abc', ['Referer' => 'https://google.com/'])->assertOk();
+        $this->assertZeilenfolge($this->sendeAnfrage(), 'organisch/sonstige', '/seite/abc', 'google.com', '-');
+
+        $this->neueSession();
+        $this->besuche("/seite/abc{$form}Referrer:%20evil.example", ['Referer' => 'https://google.com/'])->assertOk();
+        $mail = $this->sendeAnfrage();
+
+        $this->assertContains('/seite/abcReferrer: evil.example', $this->herkunftWerte());
+        $this->assertSame('/seite/abcReferrer: evil.example', $this->textWert($this->inhalt($mail)['text'], 'Einstieg:'));
+        $this->assertKeinUnicodeZeilentrenner($mail);
+    }
+
+    // AK4 (Regression)
+    #[DataProvider('unicodeZeilentrenner')]
+    public function test_unicode_zeilentrenner_in_utm_werten_erzeugen_keine_zusaetzliche_zeile(string $form, string $zeichen): void
+    {
+        $this->besuche(
+            "/startseite?utm_source=goo{$form}gle&utm_medium=cp{$form}c&utm_campaign=a{$form}Referrer:%20evil.example&utm_term=t{$form}",
+            ['Referer' => 'https://google.com/']
+        )->assertOk();
+        $mail = $this->sendeAnfrage();
+
+        // Gegenprobe: bereinigte Werte erfasst, Einordnung greift
+        $werte = $this->herkunftWerte();
+        $this->assertContains('google', $werte);
+        $this->assertContains('cpc', $werte);
+        $this->assertContains('aReferrer: evil.example', $werte);
+        $this->assertSame('google_ads', $this->textWert($this->inhalt($mail)['text'], 'Herkunft:'));
+        $this->assertKeinUnicodeZeilentrenner($mail);
+    }
+
+    // AK4, AK6 (Regression)
+    #[DataProvider('unicodeZeilentrenner')]
+    public function test_unicode_zeilentrenner_in_klick_id_erzeugen_keine_zusaetzliche_zeile(string $form, string $zeichen): void
+    {
+        $this->besuche("/startseite?gclid=ABC{$form}Referrer:%20evil.example", ['Referer' => 'https://google.com/'])->assertOk();
+        $mail = $this->sendeAnfrage();
+
+        $this->assertContains('ABCReferrer: evil.example', $this->herkunftWerte());
+        $this->assertSame('gclid', $this->textWert($this->inhalt($mail)['text'], 'Klick-ID:'));
+        $this->assertKlickIdWertNieInMail($mail, 'evil.example');
+        $this->assertKeinUnicodeZeilentrenner($mail);
+    }
+
+    // AK4 (Regression)
+    #[DataProvider('unicodeZeilentrenner')]
+    public function test_unicode_zeilentrenner_im_formularwert_site_erzeugen_keine_zusaetzliche_zeile(string $form, string $zeichen): void
+    {
+        $this->besuche('/startseite', ['Referer' => 'https://google.com/'])->assertOk();
+
+        // roh: Zeichen steht im Formularwert; kodiert: bleibt als Text %E2… stehen (K8), nie als Zeichen
+        $roh = str_starts_with($form, '%') ? $form : $zeichen;
+        $mail = $this->sendeAnfrage(site: "https://example.com/a{$roh}Referrer: evil.example");
+
+        $erwartet = str_starts_with($form, '%')
+            ? "https://example.com/a{$form}Referrer: evil.example"
+            : 'https://example.com/aReferrer: evil.example';
+        $inhalt = $this->inhalt($mail);
+
+        // Gegenprobe: Referrer-Zeile ist die echte
+        $this->assertSame('google.com', $this->textWert($inhalt['text'], 'Referrer:'));
+        $this->assertSame($erwartet, $this->gespeicherteUrl());
+        $this->assertSame($erwartet, $this->siteText($inhalt['text']));
+        $this->assertKeinUnicodeZeilentrenner($mail);
+    }
+
+    // AK4, AK6 (Regression)
+    #[DataProvider('unicodeZeilentrenner')]
+    public function test_unicode_zeilentrenner_in_site_mit_klick_id_wird_bereinigt_und_entfernt(string $form, string $zeichen): void
+    {
+        $this->besuche('/startseite?utm_source=google&utm_medium=cpc', ['Referer' => 'https://google.com/'])->assertOk();
+
+        $roh = str_starts_with($form, '%') ? $form : $zeichen;
+        $mail = $this->sendeAnfrage(site: "https://example.com/a?gclid=GEHEIM1&x=1{$roh}Referrer: evil.example");
+
+        $this->assertSame('google_ads', $this->textWert($this->inhalt($mail)['text'], 'Herkunft:'));
+        $this->assertKlickIdWertNieInMail($mail, 'GEHEIM1');
+        $erwartet = str_starts_with($form, '%')
+            ? "https://example.com/a?x=1{$form}Referrer: evil.example"
+            : 'https://example.com/a?x=1Referrer: evil.example';
+        $this->assertSame($erwartet, $this->gespeicherteUrl());
+        $this->assertKeinUnicodeZeilentrenner($mail);
     }
 }
