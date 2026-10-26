@@ -1,6 +1,7 @@
 ## In Arbeit
 
 ## Geplant
+- Danke-Seiten (`danke_formular`, `danke_bot_formular`) binden die Host-View `header.robots_disallow` ein – fehlt sie (z. B. Host packages_dev), antwortet die Seite mit 500; README nennt nur `layouts.master`/`layouts.masterBot`
 - Spalte `url` ist `string(255)`, Validierung von `site` erlaubt 2048 → lange Seitenadressen scheitern im strikten SQL-Modus (Anfrage geht verloren) (Doku 2026-10-26)
 - `nummer` per `max+1` ohne Unique-Index/Sperre (Race-Condition bei gleichzeitigen Anfragen)
 - README-Abschnitt „Routen“ dupliziert `.project/doku/07_API-Definitionen.md` und lässt `throttle` weg → auf das Leitdokument verweisen
