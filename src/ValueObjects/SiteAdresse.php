@@ -21,7 +21,7 @@ final readonly class SiteAdresse
     }
 
     /**
-     * Entfernt `gclid`, `gbraid` und `wbraid` (Parametername so dekodiert, wie PHP ihn liest); ohne Klick-ID bleibt der Wert unverändert.
+     * Entfernt `gclid`, `gbraid` und `wbraid` (ein Paar zählt, wenn PHPs eigener Parser `parse_str` dafür einen dieser Namen mit String-Wert liefert); ohne Klick-ID bleibt der Wert unverändert.
      */
     public function ohneKlickIds(): string
     {
@@ -35,7 +35,7 @@ final readonly class SiteAdresse
         $paare = explode('&', $query);
         $behalten = array_values(array_filter(
             $paare,
-            static fn (string $paar): bool => ! in_array(urldecode(explode('=', $paar, 2)[0]), Herkunft::KLICK_IDS, true),
+            fn (string $paar): bool => ! $this->istKlickId($paar),
         ));
 
         if (count($behalten) === count($paare)) {
@@ -45,6 +45,16 @@ final readonly class SiteAdresse
         $neu = $behalten === [] ? $basis : $basis.'?'.implode('&', $behalten);
 
         return $fragment === null ? $neu : $neu.'#'.$fragment;
+    }
+
+    private function istKlickId(string $paar): bool
+    {
+        parse_str($paar, $gelesen);
+        $name = array_key_first($gelesen);
+
+        return $name !== null
+            && in_array((string) $name, Herkunft::KLICK_IDS, true)
+            && is_string($gelesen[$name]);
     }
 
     /**

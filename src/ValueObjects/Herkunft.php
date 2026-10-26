@@ -109,10 +109,10 @@ final readonly class Herkunft
     }
 
     /**
-     * Entfernt Steuerzeichen (Unicode-Kategorie Cc: U+0000–001F, U+007F–009F) ersatzlos; bytegenau, daher auch bei ungültigem UTF-8.
+     * Entfernt Steuerzeichen (Unicode-Kategorie Cc: U+0000–001F, U+007F–009F) sowie U+2028/U+2029 ersatzlos; bytegenau, daher auch bei ungültigem UTF-8.
      */
     public static function ohneSteuerzeichen(string $wert): string
     {
-        return preg_replace('/[\x00-\x1F\x7F]|\xC2[\x80-\x9F]/', '', $wert) ?? '';
+        return preg_replace('/[\x00-\x1F\x7F]|\xC2[\x80-\x9F]|\xE2\x80[\xA8\xA9]/', '', $wert) ?? '';
     }
 }
