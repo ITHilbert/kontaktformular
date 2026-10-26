@@ -14,6 +14,7 @@ use Illuminate\Testing\TestResponse;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 use ITHilbert\Kontaktformular\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class AnfrageHerkunftTest extends TestCase
 {
@@ -45,7 +46,7 @@ final class AnfrageHerkunftTest extends TestCase
     protected function defineRoutes($router): void
     {
         $router->middleware('web')->group(function () use ($router): void {
-            foreach (['/excel-programmierer', '/preise', '/startseite'] as $pfad) {
+            foreach (['/excel-programmierer', '/preise', '/startseite', '/über-uns', '/mit leerzeichen'] as $pfad) {
                 $router->get($pfad, fn () => response()->json(['session' => request()->hasSession()]));
             }
 
@@ -103,11 +104,16 @@ final class AnfrageHerkunftTest extends TestCase
      *
      * @param  array<string, string>  $header
      */
-    private function sendeAnfrage(array $header = [], string $query = ''): Anfrage
+    private function sendeAnfrage(array $header = [], string $query = '', ?string $site = null): Anfrage
     {
         $vorher = Mail::sent(Anfrage::class)->count();
 
-        $this->post(route('anfrage').$query, $this->gueltigeAnfrage(), $header)
+        $daten = $this->gueltigeAnfrage();
+        if ($site !== null) {
+            $daten['site'] = $site;
+        }
+
+        $this->post(route('anfrage').$query, $daten, $header)
             ->assertRedirect(route('danke_formular'));
 
         $gesendet = Mail::sent(Anfrage::class);
@@ -147,6 +153,17 @@ final class AnfrageHerkunftTest extends TestCase
         }
 
         return null;
+    }
+
+    /**
+     * Wert von "Site:" im Text-Teil. HTML-Entitäten werden zurückgewandelt, damit der Test
+     * nicht vorschreibt, ob die Plain-View "&" escaped (nicht Gegenstand von AK6/AK8).
+     */
+    private function siteText(string $text): ?string
+    {
+        $wert = $this->textWert($text, 'Site:');
+
+        return $wert === null ? null : html_entity_decode($wert);
     }
 
     /**
@@ -724,6 +741,184 @@ final class AnfrageHerkunftTest extends TestCase
             'Site: http://localhost',
         ];
         $this->assertSame($erwartet, array_slice($zeilen, 0, count($erwartet)));
+    }
+
+    // ------------------------------------------------------------------
+    // AK1 — Einstieg URL-dekodiert
+    // ------------------------------------------------------------------
+
+    // AK1
+    public function test_einstieg_mit_umlaut_wird_dekodiert_gespeichert(): void
+    {
+        // Aufbau greift: die kodierte Adresse erreicht die Route mit Session
+        $this->besuche('/%C3%BCber-uns')->assertOk()->assertJson(['session' => true]);
+
+        $this->sendeAnfrage();
+
+        $werte = $this->herkunftWerte();
+        $this->assertContains('/über-uns', $werte);
+        $this->assertNotContains('/%C3%BCber-uns', $werte);
+        $this->assertStringNotContainsString('%C3', (string) $this->herkunftRoh());
+    }
+
+    // AK1
+    public function test_einstieg_mit_umlaut_wird_in_der_mail_dekodiert_angezeigt(): void
+    {
+        $this->besuche('/%C3%BCber-uns?utm_source=x')->assertOk();
+
+        $mail = $this->sendeAnfrage();
+        $inhalt = $this->inhalt($mail);
+
+        $this->assertSame('/über-uns', $this->textWert($inhalt['text'], 'Einstieg:'));
+        $this->assertSame('/über-uns', $this->htmlWert($inhalt['html'], 'Einstieg:'));
+        $this->assertStringNotContainsString('%C3%BC', $inhalt['text']);
+        $this->assertStringNotContainsString('%C3%BC', $inhalt['html']);
+    }
+
+    // AK1
+    public function test_einstieg_mit_prozent_kodiertem_leerzeichen_wird_dekodiert(): void
+    {
+        $this->besuche('/mit%20leerzeichen?gclid=abc')->assertOk();
+
+        $mail = $this->sendeAnfrage();
+
+        $this->assertContains('/mit leerzeichen', $this->herkunftWerte());
+        $this->assertNotContains('/mit%20leerzeichen', $this->herkunftWerte());
+        $this->assertHerkunftZeilen($mail, 'google_ads', '/mit leerzeichen', '-', 'gclid');
+    }
+
+    // AK1 (Gegenprobe: Pfad ohne Kodierung bleibt unverändert, Query bleibt draußen)
+    public function test_einstieg_ohne_kodierung_bleibt_unveraendert_und_ohne_query(): void
+    {
+        $this->besuche('/excel-programmierer?x=%C3%BC')->assertOk();
+
+        $this->sendeAnfrage();
+
+        $this->assertEqualsCanonicalizing(['/excel-programmierer'], $this->herkunftWerte());
+    }
+
+    // ------------------------------------------------------------------
+    // AK6 / AK8 — Klick-ID nie in Site:, übrige URL unverändert
+    // ------------------------------------------------------------------
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function siteMitKlickId(): array
+    {
+        $b = 'https://example.com/excel-programmierer';
+
+        return [
+            'gclid mit utm und x' => [$b.'?gclid=GEHEIM1&utm_source=google&x=1', $b.'?utm_source=google&x=1'],
+            'gbraid' => [$b.'?gbraid=GEHEIM1&utm_source=google&x=1', $b.'?utm_source=google&x=1'],
+            'wbraid' => [$b.'?wbraid=GEHEIM1&utm_source=google&x=1', $b.'?utm_source=google&x=1'],
+            'alle drei zugleich' => [$b.'?gclid=GEHEIM1&gbraid=GEHEIM1&wbraid=GEHEIM1&utm_source=google', $b.'?utm_source=google'],
+            'Klick-ID als einziger Parameter' => [$b.'?gclid=GEHEIM1', $b],
+            'Klick-ID in der Mitte' => [$b.'?a=1&gclid=GEHEIM1&b=2', $b.'?a=1&b=2'],
+            'Klick-ID am Ende' => [$b.'?x=1&gclid=GEHEIM1', $b.'?x=1'],
+            'mit Fragment' => [$b.'?gclid=GEHEIM1&x=1#anker', $b.'?x=1#anker'],
+            'einziger Parameter mit Fragment' => [$b.'?gclid=GEHEIM1#anker', $b.'#anker'],
+            'ähnlich benannter Parameter bleibt' => [$b.'?gclidx=bleibt&gclid=GEHEIM1&xgbraid=auch', $b.'?gclidx=bleibt&xgbraid=auch'],
+            'kodierte Werte bleiben unverändert' => [$b.'?q=a%20b%C3%BC&gclid=GEHEIM1&utm_term=x+y', $b.'?q=a%20b%C3%BC&utm_term=x+y'],
+            'nur Host mit Klick-ID' => ['https://example.com?gclid=GEHEIM1&x=1', 'https://example.com?x=1'],
+            'http mit Port' => ['http://example.com:8080/a/b?utm_medium=cpc&wbraid=GEHEIM1', 'http://example.com:8080/a/b?utm_medium=cpc'],
+        ];
+    }
+
+    // AK6, AK8
+    #[DataProvider('siteMitKlickId')]
+    public function test_klick_id_wird_aus_site_entfernt_alles_uebrige_bleibt(string $eingabe, string $erwartet): void
+    {
+        // Gegenprobe: Der Aufbau greift — die Klick-ID steht im Request, ist in der Herkunft erfasst
+        // und im übermittelten Wert vorhanden; die Mail nennt nur den Namen.
+        $this->assertStringContainsString('GEHEIM1', $eingabe);
+        $this->besuche('/excel-programmierer?gclid=GEHEIM1&utm_source=google')->assertOk();
+
+        $mail = $this->sendeAnfrage(site: $eingabe);
+        $inhalt = $this->inhalt($mail);
+
+        $this->assertContains('GEHEIM1', $this->herkunftWerte());
+        $this->assertSame('gclid', $this->textWert($inhalt['text'], 'Klick-ID:'));
+        $this->assertSame('google_ads', $this->textWert($inhalt['text'], 'Herkunft:'));
+
+        $this->assertSame($erwartet, DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+        $this->assertSame($erwartet, $this->siteText($inhalt['text']));
+        $this->assertSame($erwartet, $this->htmlWert($inhalt['html'], 'Site:'));
+        $this->assertStringNotContainsString('GEHEIM1', $inhalt['text']);
+        $this->assertStringNotContainsString('GEHEIM1', $inhalt['html']);
+        $this->assertStringNotContainsString('GEHEIM1', (string) DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+    }
+
+    // AK6 (Gegenprobe-Test: ohne Klick-ID in der Site bleibt der Wert, mit utm_* in der Mail)
+    public function test_klick_id_in_site_ohne_herkunft_in_session_wird_trotzdem_entfernt(): void
+    {
+        $this->sessionTreiber('cookie');
+        $this->besuche('/excel-programmierer')->assertOk();
+
+        $mail = $this->sendeAnfrage(site: 'https://example.com/a?gclid=GEHEIM1&utm_source=google');
+        $inhalt = $this->inhalt($mail);
+
+        $this->assertNull($this->herkunftRoh());
+        $this->assertSame('https://example.com/a?utm_source=google', $this->siteText($inhalt['text']));
+        $this->assertStringNotContainsString('GEHEIM1', $inhalt['html']);
+        $this->assertStringNotContainsString('GEHEIM1', $inhalt['text']);
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function siteOhneKlickId(): array
+    {
+        return [
+            'Standard' => ['http://localhost'],
+            'utm und weitere Parameter' => ['https://example.com/a?utm_source=google&utm_medium=cpc&b=2&a=1'],
+            'Reihenfolge umgekehrt' => ['https://example.com/a?z=1&utm_campaign=k&a=2'],
+            'mit Fragment' => ['https://example.com/a?z=1&a=2#frag'],
+            'kodierte Zeichen' => ['https://example.com/%C3%BCber?q=a%20b&utm_term=x+y'],
+            'ohne Query' => ['https://example.com/seite'],
+            'ähnlich benannte Parameter' => ['https://example.com/a?gclidx=1&xgclid=2&gbraidd=3'],
+        ];
+    }
+
+    // AK8
+    #[DataProvider('siteOhneKlickId')]
+    public function test_site_ohne_klick_id_bleibt_exakt_der_uebermittelte_wert(string $site): void
+    {
+        $this->besuche('/startseite?utm_source=google')->assertOk();
+
+        $mail = $this->sendeAnfrage(site: $site);
+        $inhalt = $this->inhalt($mail);
+
+        // Gegenprobe: Aufbau greift, die Anfrage wurde mit eigener Site gespeichert
+        $this->assertDatabaseHas('kontaktformular', ['email' => 'max@example.com']);
+
+        $this->assertSame($site, DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+        $this->assertSame($site, $this->siteText($inhalt['text']));
+        $this->assertSame($site, $this->htmlWert($inhalt['html'], 'Site:'));
+    }
+
+    // AK8 (Nummer, Datum und Format bleiben auch bei entfernter Klick-ID unverändert)
+    public function test_nummer_datum_und_site_format_bleiben_bei_entfernter_klick_id_unveraendert(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 10, 26, 12, 0, 0));
+        $this->besuche('/excel-programmierer?gclid=GEHEIM1')->assertOk();
+
+        $text = $this->inhalt($this->sendeAnfrage(site: 'https://example.com/a?gclid=GEHEIM1&x=1'))['text'];
+
+        $zeilen = array_map('html_entity_decode', $this->zeilen($text));
+        $erwartet = [
+            'Kontaktformular',
+            'Nummer: 1',
+            'Name: Max Mustermann',
+            'E-Mail: max@example.com',
+            'Telefon: +49 1234 567890',
+            'Mitteilung: Das ist eine valide Testnachricht mit genug Inhalt.',
+            'Datenverarbeitung: ja',
+            'Datum: 2026-10-26 12:00:00',
+            'Site: https://example.com/a?x=1',
+        ];
+        $this->assertSame($erwartet, array_slice($zeilen, 0, count($erwartet)));
+        $this->assertStringStartsWith('Herkunft:', $zeilen[count($erwartet)] ?? '');
     }
 
     // ------------------------------------------------------------------
