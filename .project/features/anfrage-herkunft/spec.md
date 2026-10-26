@@ -37,6 +37,8 @@ Anlass: Dashboard-Task #85 (Projekt kontaktformular), Bezug #84 (`anfrage-bcc`).
 8. Bestehende Datensätze → `herkunft` bleibt `null`, kein Nachbefüllen.
 9. Session-Treiber `cookie` (`session.driver`) → die Middleware speichert nichts, weil die Session-Daten dann im Browser lägen. Die Anfrage wird mit `herkunft = null` gespeichert, die Mail-Zeilen zeigen `direkt` bzw. `-`. *Ergänzt durch den Moderator am 2026-10-26 (DSGVO-konforme Wahl, ohne Rückfrage nach Rule `entscheidungsbefugnis.md`).*
 
+10. Werte aus dem Request mit Steuerzeichen (z. B. `%0A`, `%0D` im Pfad, in UTM-Werten, Klick-IDs oder im Formularwert `site`) → die Steuerzeichen werden entfernt, bevor sie gespeichert oder in die Mail geschrieben werden; es entsteht keine zusätzliche Zeile (AK4). Prozentkodierte Parameternamen (`gcl%69d`) gelten wie der dekodierte Name (`gclid`), auch beim Entfernen aus `site` (AK6). *Ergänzt 2026-10-26 nach dem zweiten Review, freigegeben durch den User („Fix als Bugfix gegen die bestehenden AKs“); `site` vom Moderator ergänzt.*
+
 ## Nicht-Ziele
 - Den Wert der `gclid` für einen Offline-Conversion-Upload an Google weitergeben.
 - Auswertung der Zeile `Herkunft:` im Lead-Skript (`ads-warehouse/ads_warehouse/leads/parsing.py`), das macht der Marketing-Agent.
