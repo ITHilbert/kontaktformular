@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
+use ITHilbert\Kontaktformular\ValueObjects\Herkunft;
 
 final class Anfrage extends Mailable
 {
@@ -19,11 +20,15 @@ final class Anfrage extends Mailable
 
     public string $title;
 
+    /** @var array<string, string> Bezeichnung => Wert, in der Reihenfolge der Mail */
+    public array $herkunftZeilen;
+
     public function __construct(Kontaktformular $kontakt)
     {
         $this->kontakt = $kontakt;
         $this->fileUrl = $kontakt->getFileUrl();
         $this->title = config('kontaktformular.subject').' ['.$kontakt->nummer.']';
+        $this->herkunftZeilen = $this->herkunftZeilen($kontakt);
 
         $bcc = $this->bccAdressen();
         if ($bcc !== []) {
@@ -40,6 +45,21 @@ final class Anfrage extends Mailable
             ->text('kontaktformular::mail.anfrage_plain');
 
         return $this;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function herkunftZeilen(Kontaktformular $kontakt): array
+    {
+        $herkunft = Herkunft::fromArray(is_array($kontakt->herkunft) ? $kontakt->herkunft : null);
+
+        return [
+            'Herkunft' => $herkunft->kanal()->value,
+            'Einstieg' => $herkunft->einstieg ?? '-',
+            'Referrer' => $herkunft->referrer ?? '-',
+            'Klick-ID' => $herkunft->klickId() ?? '-',
+        ];
     }
 
     /**

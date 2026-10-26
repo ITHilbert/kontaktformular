@@ -38,6 +38,7 @@ final class KontaktformularTest extends TestCase
             $table->string('file_size')->nullable();
             $table->timestamp('file_downloaded_at')->nullable();
             $table->timestamp('file_deleted_at')->nullable();
+            $table->json('herkunft')->nullable();
             $table->timestamps();
         });
     }
@@ -47,18 +48,18 @@ final class KontaktformularTest extends TestCase
         Mail::fake();
 
         $response = $this->post(route('anfrage'), [
-            'Name'              => 'Max Mustermann',
-            'Email'             => 'max@example.com',
-            'Nachricht'         => 'Das ist eine valide Testnachricht mit genug Inhalt.',
+            'Name' => 'Max Mustermann',
+            'Email' => 'max@example.com',
+            'Nachricht' => 'Das ist eine valide Testnachricht mit genug Inhalt.',
             'datenverarbeitung' => '1',
-            'site'              => 'http://localhost',
+            'site' => 'http://localhost',
         ]);
 
         $response->assertRedirect(route('danke_formular'));
 
         $this->assertDatabaseHas('kontaktformular', [
-            'email'   => 'max@example.com',
-            'name'    => 'Max Mustermann',
+            'email' => 'max@example.com',
+            'name' => 'Max Mustermann',
             'telefon' => null,
         ]);
 
@@ -70,18 +71,18 @@ final class KontaktformularTest extends TestCase
         Mail::fake();
 
         $response = $this->post(route('anfrage'), [
-            'Name'              => 'Erika Musterfrau',
-            'Email'             => 'erika@example.com',
-            'Telefon'           => '+49 1234 567890',
-            'Nachricht'         => 'Eine weitere valide Testnachricht mit Spaces.',
+            'Name' => 'Erika Musterfrau',
+            'Email' => 'erika@example.com',
+            'Telefon' => '+49 1234 567890',
+            'Nachricht' => 'Eine weitere valide Testnachricht mit Spaces.',
             'datenverarbeitung' => '1',
-            'site'              => 'http://localhost',
+            'site' => 'http://localhost',
         ]);
 
         $response->assertRedirect(route('danke_formular'));
 
         $this->assertDatabaseHas('kontaktformular', [
-            'email'   => 'erika@example.com',
+            'email' => 'erika@example.com',
             'telefon' => '+49 1234 567890',
         ]);
     }
@@ -91,12 +92,12 @@ final class KontaktformularTest extends TestCase
         Mail::fake();
 
         $response = $this->post(route('anfrage'), [
-            'Name'              => 'Bot',
-            'Email'             => 'bot@example.com',
-            'Nachricht'         => 'Spam-Nachricht ist lang genug fuer den Filter.',
+            'Name' => 'Bot',
+            'Email' => 'bot@example.com',
+            'Nachricht' => 'Spam-Nachricht ist lang genug fuer den Filter.',
             'datenverarbeitung' => '1',
-            'site'              => 'http://localhost',
-            'fax'               => 'gefuellt',
+            'site' => 'http://localhost',
+            'fax' => 'gefuellt',
         ]);
 
         $response->assertRedirect(route('danke_bot_formular'));
@@ -109,11 +110,11 @@ final class KontaktformularTest extends TestCase
         Mail::fake();
 
         $response = $this->post(route('anfrage'), [
-            'Name'              => 'Spam',
-            'Email'             => 'spam@example.com',
-            'Nachricht'         => 'kurz',
+            'Name' => 'Spam',
+            'Email' => 'spam@example.com',
+            'Nachricht' => 'kurz',
             'datenverarbeitung' => '1',
-            'site'              => 'http://localhost',
+            'site' => 'http://localhost',
         ]);
 
         $response->assertRedirect(route('danke_bot_formular'));
@@ -124,9 +125,9 @@ final class KontaktformularTest extends TestCase
     public function test_validation_schlaegt_ohne_pflichtfelder_fehl(): void
     {
         $response = $this->postJson(route('anfrage'), [
-            'Nachricht'         => 'Eine gueltige Testnachricht mit Leerzeichen.',
+            'Nachricht' => 'Eine gueltige Testnachricht mit Leerzeichen.',
             'datenverarbeitung' => '1',
-            'site'              => 'http://localhost',
+            'site' => 'http://localhost',
         ]);
 
         $response->assertStatus(422);
@@ -136,22 +137,22 @@ final class KontaktformularTest extends TestCase
 
     public function test_nummer_zaehlt_pro_jahr_hoch(): void
     {
-        $erster = new Kontaktformular();
+        $erster = new Kontaktformular;
         $erster->fill([
-            'url'               => 'http://localhost',
-            'name'              => 'A',
-            'email'             => 'a@example.com',
-            'nachricht'         => 'erste',
+            'url' => 'http://localhost',
+            'name' => 'A',
+            'email' => 'a@example.com',
+            'nachricht' => 'erste',
             'datenverarbeitung' => true,
         ]);
         $erster->save();
 
-        $zweiter = new Kontaktformular();
+        $zweiter = new Kontaktformular;
         $zweiter->fill([
-            'url'               => 'http://localhost',
-            'name'              => 'B',
-            'email'             => 'b@example.com',
-            'nachricht'         => 'zweite',
+            'url' => 'http://localhost',
+            'name' => 'B',
+            'email' => 'b@example.com',
+            'nachricht' => 'zweite',
             'datenverarbeitung' => true,
         ]);
         $zweiter->save();

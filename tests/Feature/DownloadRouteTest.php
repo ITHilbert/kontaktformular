@@ -41,6 +41,7 @@ final class DownloadRouteTest extends TestCase
             $table->string('file_size')->nullable();
             $table->timestamp('file_downloaded_at')->nullable();
             $table->timestamp('file_deleted_at')->nullable();
+            $table->json('herkunft')->nullable();
             $table->timestamps();
         });
     }
@@ -61,20 +62,20 @@ final class DownloadRouteTest extends TestCase
 
     private function dateiPfad(string $hash): string
     {
-        return storage_path('app/kontaktformular/' . $hash . '.zip');
+        return storage_path('app/kontaktformular/'.$hash.'.zip');
     }
 
     private function anfrage(string $hash, string $name = 'anhang'): Kontaktformular
     {
-        $anfrage = new Kontaktformular();
+        $anfrage = new Kontaktformular;
         $anfrage->fill([
-            'url'               => 'http://localhost',
-            'name'              => 'Test',
-            'email'             => 'test@example.com',
-            'nachricht'         => 'Nachricht',
+            'url' => 'http://localhost',
+            'name' => 'Test',
+            'email' => 'test@example.com',
+            'nachricht' => 'Nachricht',
             'datenverarbeitung' => true,
-            'file_hash'         => $hash,
-            'file_name'         => $name,
+            'file_hash' => $hash,
+            'file_name' => $name,
         ]);
         $anfrage->save();
 
@@ -96,7 +97,7 @@ final class DownloadRouteTest extends TestCase
 
     private function eindeutigerHash(): string
     {
-        return 'dltest' . bin2hex(random_bytes(8));
+        return 'dltest'.bin2hex(random_bytes(8));
     }
 
     public function test_unbekannte_id_liefert_404(): void
@@ -115,7 +116,7 @@ final class DownloadRouteTest extends TestCase
         $anfrage = $this->anfrage($hash);
         $this->legeDateiAn($hash, 'inhalt');
 
-        $this->get(route('kontaktformular.file', ['hash' => $hash . 'x', 'name' => 'anhang', 'id' => $anfrage->id]))
+        $this->get(route('kontaktformular.file', ['hash' => $hash.'x', 'name' => 'anhang', 'id' => $anfrage->id]))
             ->assertNotFound();
     }
 
@@ -135,7 +136,7 @@ final class DownloadRouteTest extends TestCase
         $anfrage = $this->anfrage($hash);
         $this->legeDateiAn($hash, 'inhalt');
 
-        $this->get(route('kontaktformular.file', ['hash' => $hash . 'x', 'name' => 'anhang', 'id' => $anfrage->id]))->assertNotFound();
+        $this->get(route('kontaktformular.file', ['hash' => $hash.'x', 'name' => 'anhang', 'id' => $anfrage->id]))->assertNotFound();
         $this->get(route('kontaktformular.file', ['hash' => $hash, 'name' => 'anders', 'id' => $anfrage->id]))->assertNotFound();
         $this->get(route('kontaktformular.file', ['hash' => $hash, 'name' => 'anhang', 'id' => $anfrage->id + 1000]))->assertNotFound();
 

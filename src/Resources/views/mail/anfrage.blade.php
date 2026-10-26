@@ -41,5 +41,11 @@
         <td><b>Site:</b></td>
         <td>{{ $kontakt->url }}</td>
     </tr>
+    @foreach($herkunftZeilen as $bezeichnung => $wert)
+        <tr>
+            <td><b>{{ $bezeichnung }}:</b></td>
+            <td>{{ $wert }}</td>
+        </tr>
+    @endforeach
 </table>
 </html>

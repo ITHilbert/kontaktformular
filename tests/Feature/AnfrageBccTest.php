@@ -38,6 +38,7 @@ final class AnfrageBccTest extends TestCase
             $table->string('file_size')->nullable();
             $table->timestamp('file_downloaded_at')->nullable();
             $table->timestamp('file_deleted_at')->nullable();
+            $table->json('herkunft')->nullable();
             $table->timestamps();
         });
     }

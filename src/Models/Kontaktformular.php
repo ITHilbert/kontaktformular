@@ -21,6 +21,7 @@ class Kontaktformular extends Model
         'jahr',
         'nummer',
         'url',
+        'herkunft',
         'name',
         'email',
         'telefon',
@@ -35,11 +36,12 @@ class Kontaktformular extends Model
     ];
 
     protected $casts = [
-        'jahr'               => 'integer',
-        'nummer'             => 'integer',
-        'datenverarbeitung'  => 'boolean',
+        'jahr' => 'integer',
+        'nummer' => 'integer',
+        'herkunft' => 'array',
+        'datenverarbeitung' => 'boolean',
         'file_downloaded_at' => 'datetime',
-        'file_deleted_at'    => 'datetime',
+        'file_deleted_at' => 'datetime',
     ];
 
     public function __construct(array $attributes = [])
@@ -56,8 +58,8 @@ class Kontaktformular extends Model
 
     private function getNewNummer(): int
     {
-        $jahr       = (int) date('Y');
-        $maxNummer  = (int) (self::where('jahr', $jahr)->max('nummer') ?? 0);
+        $jahr = (int) date('Y');
+        $maxNummer = (int) (self::where('jahr', $jahr)->max('nummer') ?? 0);
 
         return $maxNummer + 1;
     }
@@ -69,11 +71,11 @@ class Kontaktformular extends Model
             $url .= '/';
         }
 
-        return $url . $this->file_hash . '/' . $this->file_name . '/' . $this->id;
+        return $url.$this->file_hash.'/'.$this->file_name.'/'.$this->id;
     }
 
     public function getHashWithTimestamp(): string
     {
-        return $this->file_hash . '_' . $this->created_at->timestamp;
+        return $this->file_hash.'_'.$this->created_at->timestamp;
     }
 }
