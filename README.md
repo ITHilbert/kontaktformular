@@ -67,6 +67,8 @@ Erfasst wird nur beim **ersten Request einer Session** (First Touch); spätere R
 
 - Nur vorhandene Werte werden gespeichert. Leere Parameter und Arrays (`?gclid[]=x`) werden ignoriert, Werte über 255 Zeichen auf 255 gekürzt.
 - Ein Referrer mit dem eigenen Host (interne Navigation) oder ohne gültigen Host gilt als kein Referrer.
+- Steuerzeichen (U+0000–U+001F, U+007F, U+0080–U+009F) sowie die Zeilentrenner U+2028 und U+2029 werden aus allen erfassten Werten und aus `site` entfernt. So entstehen keine zusätzlichen Zeilen im Mail-Text.
+- Als Klick-ID zählt jeder Parametername, den PHP als `gclid`, `gbraid` oder `wbraid` liest, z. B. `gcl%69d=…` oder `+gclid=…`.
 
 ### Spalte `herkunft`
 

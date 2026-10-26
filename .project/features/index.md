@@ -1,6 +1,10 @@
 ## In Arbeit
 
 ## Geplant
+- Spalte `url` ist `string(255)`, Validierung von `site` erlaubt 2048 → lange Seitenadressen scheitern im strikten SQL-Modus (Anfrage geht verloren) (Doku 2026-10-26)
+- `nummer` per `max+1` ohne Unique-Index/Sperre (Race-Condition bei gleichzeitigen Anfragen)
+- README-Abschnitt „Routen“ dupliziert `.project/doku/07_API-Definitionen.md` und lässt `throttle` weg → auf das Leitdokument verweisen
+- Leitdokumente `06_Prozessdefinitionen.md` (Löschbefehl, Anhänge) und `13_Glossar.md` (Herkunft, First Touch, Klick-ID) fehlen
 - anfrage-herkunft: Test-Helfer `phpKlickId()`/`besuche()` bauen auf `Request::create()` (wendet `html_entity_decode` an) – weicht bei `&amp;`-Formen vom echten Request ab (Review 4)
 - anfrage-herkunft: `herkunft` steht unnötig in `$fillable` des Models
 - Laravel legt die volle URL samt `gclid` in `_previous.url` der Session ab (nur relevant beim Session-Treiber `cookie`)
