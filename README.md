@@ -25,12 +25,21 @@ php artisan migrate
 return [
     'mailFrom'        => env('KONTAKTFORMULAR_MAIL_FROM', env('MAIL_FROM_ADDRESS')),
     'mailTo'          => env('KONTAKTFORMULAR_MAIL_TO',   env('MAIL_TO_ADDRESS')),
+    'mailBcc'         => env('KONTAKTFORMULAR_MAIL_BCC', ''),
     'subject'         => env('KONTAKTFORMULAR_SUBJECT', 'Anfrage von ' . env('APP_NAME')),
     'fileDownloadUrl' => env('APP_URL') . '/kontaktformular/file/',
     'dateien_loeschen_nach_tagen'  => env('KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN', 30),
     'anfragen_loeschen_nach_tagen' => env('KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN'),
 ];
 ```
+
+### Kopie an das Lead-Postfach (`mailBcc`)
+
+`mailBcc` (env `KONTAKTFORMULAR_MAIL_BCC`) schickt jede Anfrage zusätzlich als BCC-Kopie an ein Lead-Postfach, z. B. `marketing@it-entwickler-hilbert.de` für die Marketing-Auswertung. `mailTo`, Absender, Betreff und Inhalt bleiben unverändert.
+
+- Eine Adresse: `KONTAKTFORMULAR_MAIL_BCC=marketing@it-entwickler-hilbert.de`
+- Mehrere Adressen: durch Komma getrennt (`a@x.de, b@y.de`); Leerzeichen und leere Teile werden ignoriert. In der veröffentlichten Config ist auch ein Array möglich (`['a@x.de', 'b@y.de']`).
+- Leer oder nicht gesetzt: keine Kopie.
 
 ## Löschfristen
 
