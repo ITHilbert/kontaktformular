@@ -50,6 +50,8 @@ final class AnfrageHerkunftTest extends TestCase
                 $router->get($pfad, fn () => response()->json(['session' => request()->hasSession()]));
             }
 
+            $router->get('/seite/{slug}', fn () => response()->json(['session' => request()->hasSession()]));
+
             $router->get('/login', fn () => response('login'))->name('login');
             $router->get('/intern', fn () => response()->json(['intern' => true]))->middleware('auth');
             $router->get('/begrenzt', fn () => response()->json(['begrenzt' => true]))->middleware('throttle:1,1');
@@ -1095,5 +1097,267 @@ final class AnfrageHerkunftTest extends TestCase
         $this->assertNull($this->herkunftRoh());
         $this->assertDatabaseCount('kontaktformular', 2);
         $this->assertHerkunftZeilen($mail, 'direkt', '-', '-', '-');
+    }
+
+    // ------------------------------------------------------------------
+    // Bugfix: kodierte Klick-ID-Namen (AK6) und Steuerzeichen (AK4, Randfall 10)
+    // ------------------------------------------------------------------
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function kodierteKlickIdNamen(): array
+    {
+        return [
+            'gcl%69d' => ['gcl%69d', 'gclid'],
+            '%67clid' => ['%67clid', 'gclid'],
+            'gc%6Cid (Hex groß)' => ['gc%6Cid', 'gclid'],
+            'gc%6cid (Hex klein)' => ['gc%6cid', 'gclid'],
+            'komplett kodiert' => ['%67%63%6C%69%64', 'gclid'],
+            'gbr%61id' => ['gbr%61id', 'gbraid'],
+            'gbra%69d' => ['gbra%69d', 'gbraid'],
+            'wbr%61id' => ['wbr%61id', 'wbraid'],
+            'wbra%69d' => ['wbra%69d', 'wbraid'],
+            '%77braid' => ['%77braid', 'wbraid'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function steuerzeichen(): array
+    {
+        return [
+            'LF' => ['%0A', "\n"],
+            'CR' => ['%0D', "\r"],
+            'CRLF' => ['%0D%0A', "\r\n"],
+            'TAB' => ['%09', "\t"],
+            'NUL' => ['%00', "\0"],
+        ];
+    }
+
+    private function ohneSteuerzeichen(string $wert, string $kontext): void
+    {
+        $this->assertSame(0, preg_match('/[\x00-\x1F\x7F]/', $wert), "Steuerzeichen in {$kontext}");
+    }
+
+    /**
+     * Text- und HTML-Teil: jede der sieben Zeilen genau einmal, in der Reihenfolge der Spec,
+     * die vier Herkunftszeilen direkt nach Site:, keine Steuerzeichen, keine Zusatzzeile.
+     */
+    private function assertZeilenfolge(Anfrage $mail, string $herkunft, string $einstieg, string $referrer, string $klickId): void
+    {
+        $inhalt = $this->inhalt($mail);
+        $zeilen = array_map('html_entity_decode', $this->zeilen($inhalt['text']));
+        $praefixe = ['Nummer:', 'Datum:', 'Site:', 'Herkunft:', 'Einstieg:', 'Referrer:', 'Klick-ID:'];
+
+        $positionen = [];
+        foreach ($praefixe as $praefix) {
+            $treffer = array_keys(array_filter($zeilen, static fn (string $z): bool => str_starts_with($z, $praefix)));
+            $this->assertCount(1, $treffer, "Text-Teil: Zeile {$praefix} nicht genau einmal");
+            $positionen[$praefix] = $treffer[0];
+        }
+        $sortiert = $positionen;
+        asort($sortiert);
+        $this->assertSame($praefixe, array_keys($sortiert), 'Text-Teil: Reihenfolge');
+        $this->assertSame($positionen['Site:'] + 1, $positionen['Herkunft:']);
+        $this->assertSame($positionen['Site:'] + 2, $positionen['Einstieg:']);
+        $this->assertSame($positionen['Site:'] + 3, $positionen['Referrer:']);
+        $this->assertSame($positionen['Site:'] + 4, $positionen['Klick-ID:']);
+
+        foreach ($zeilen as $zeile) {
+            $this->ohneSteuerzeichen($zeile, 'Text-Teil');
+        }
+        $this->assertSame($herkunft, $this->textWert($inhalt['text'], 'Herkunft:'));
+        $this->assertSame($einstieg, $this->textWert($inhalt['text'], 'Einstieg:'));
+        $this->assertSame($referrer, $this->textWert($inhalt['text'], 'Referrer:'));
+        $this->assertSame($klickId, $this->textWert($inhalt['text'], 'Klick-ID:'));
+
+        $labels = array_column($this->htmlZeilen($inhalt['html']), 0);
+        $this->assertSame(1, count(array_keys($labels, 'Referrer:', true)), 'HTML-Teil: Referrer: nicht genau einmal');
+        $index = array_search('Site:', $labels, true);
+        $this->assertNotFalse($index);
+        $this->assertSame(['Herkunft:', 'Einstieg:', 'Referrer:', 'Klick-ID:'], array_slice($labels, $index + 1, 4));
+        foreach ($this->htmlZeilen($inhalt['html']) as [$label, $wert]) {
+            $this->ohneSteuerzeichen($wert, "HTML-Teil {$label}");
+        }
+        $this->assertSame($einstieg, $this->htmlWert($inhalt['html'], 'Einstieg:'));
+        $this->assertSame($referrer, $this->htmlWert($inhalt['html'], 'Referrer:'));
+    }
+
+    private function assertGespeichertOhneSteuerzeichen(): void
+    {
+        foreach ($this->herkunftWerte() as $wert) {
+            $this->ohneSteuerzeichen($wert, 'Spalte herkunft');
+        }
+        $this->ohneSteuerzeichen((string) DB::table('kontaktformular')->orderByDesc('id')->value('url'), 'Spalte url');
+    }
+
+    private function assertKlickIdWertNieInMail(Anfrage $mail, string $wert): void
+    {
+        $inhalt = $this->inhalt($mail);
+        $this->assertStringNotContainsString($wert, $inhalt['html']);
+        $this->assertStringNotContainsString($wert, $inhalt['text']);
+        $this->assertStringNotContainsString($wert, (string) DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+    }
+
+    // AK6 (Regression)
+    #[DataProvider('kodierteKlickIdNamen')]
+    public function test_kodierter_klick_id_name_in_query_und_site_wird_wie_der_dekodierte_name_entfernt(string $kodiert, string $name): void
+    {
+        $b = 'https://example.com/a';
+        $this->besuche("/startseite?{$kodiert}=KODIERT42&utm_source=google&x=1")->assertOk();
+
+        $mail = $this->sendeAnfrage(site: "{$b}?{$kodiert}=KODIERT42&utm_source=google&x=1");
+        $inhalt = $this->inhalt($mail);
+
+        // Gegenprobe: die Middleware hat den Wert erfasst, die Mail nennt nur den Namen
+        $this->assertContains('KODIERT42', $this->herkunftWerte());
+        $this->assertSame($name, $this->textWert($inhalt['text'], 'Klick-ID:'));
+        $this->assertSame($name, $this->htmlWert($inhalt['html'], 'Klick-ID:'));
+        $this->assertSame('google_ads', $this->textWert($inhalt['text'], 'Herkunft:'));
+
+        $this->assertKlickIdWertNieInMail($mail, 'KODIERT42');
+        // übrige Parameter unverändert
+        $this->assertSame("{$b}?utm_source=google&x=1", DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+        $this->assertSame("{$b}?utm_source=google&x=1", $this->siteText($inhalt['text']));
+        $this->assertSame("{$b}?utm_source=google&x=1", $this->htmlWert($inhalt['html'], 'Site:'));
+    }
+
+    // AK6 (Regression)
+    #[DataProvider('kodierteKlickIdNamen')]
+    public function test_kodierter_klick_id_name_nur_in_site_wird_entfernt(string $kodiert, string $name): void
+    {
+        $this->besuche('/startseite?utm_source=google&utm_medium=cpc')->assertOk();
+
+        $mail = $this->sendeAnfrage(site: "https://example.com/a?a=1&{$kodiert}=KODIERT42&b=2#anker");
+        $inhalt = $this->inhalt($mail);
+
+        // Gegenprobe: ohne kodierte Schreibweise wird derselbe Wert entfernt, der Aufbau greift
+        $this->assertSame('google_ads', $this->textWert($inhalt['text'], 'Herkunft:'));
+        $this->assertSame('-', $this->textWert($inhalt['text'], 'Klick-ID:'));
+
+        $this->assertKlickIdWertNieInMail($mail, 'KODIERT42');
+        $this->assertSame('https://example.com/a?a=1&b=2#anker', DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+        $this->assertSame('https://example.com/a?a=1&b=2#anker', $this->siteText($inhalt['text']));
+        $this->assertSame('https://example.com/a?a=1&b=2#anker', $this->htmlWert($inhalt['html'], 'Site:'));
+    }
+
+    // AK6 (Regression)
+    #[DataProvider('kodierteKlickIdNamen')]
+    public function test_kodierter_klick_id_name_nur_in_request_query_nennt_den_namen_ohne_wert(string $kodiert, string $name): void
+    {
+        $this->besuche("/startseite?{$kodiert}=KODIERT42")->assertOk();
+
+        $mail = $this->sendeAnfrage(site: 'http://localhost/startseite');
+
+        $this->assertContains('KODIERT42', $this->herkunftWerte());
+        $this->assertHerkunftZeilen($mail, 'google_ads', '/startseite', '-', $name);
+        $this->assertKlickIdWertNieInMail($mail, 'KODIERT42');
+        $this->assertSame('http://localhost/startseite', DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+    }
+
+    // AK4 (Regression)
+    #[DataProvider('steuerzeichen')]
+    public function test_steuerzeichen_im_pfad_erzeugen_keine_zusaetzliche_zeile(string $kodiert, string $roh): void
+    {
+        $einstieg = '/seite/abcReferrer: evil.example';
+
+        // Gegenprobe: sauberer Pfad ergibt dieselbe Zeilenfolge mit echtem Referrer
+        $this->besuche('/seite/abc', ['Referer' => 'https://google.com/'])->assertOk();
+        $this->assertZeilenfolge($this->sendeAnfrage(), 'organisch/sonstige', '/seite/abc', 'google.com', '-');
+
+        $this->neueSession();
+        $this->besuche("/seite/abc{$kodiert}Referrer:%20evil.example", ['Referer' => 'https://google.com/'])
+            ->assertOk()
+            ->assertJson(['session' => true]);
+
+        $mail = $this->sendeAnfrage();
+
+        $this->assertZeilenfolge($mail, 'organisch/sonstige', $einstieg, 'google.com', '-');
+        $this->assertContains($einstieg, $this->herkunftWerte());
+        $this->assertGespeichertOhneSteuerzeichen();
+    }
+
+    // AK4 (Regression)
+    #[DataProvider('steuerzeichen')]
+    public function test_steuerzeichen_in_utm_werten_erzeugen_keine_zusaetzliche_zeile(string $kodiert, string $roh): void
+    {
+        $this->besuche(
+            "/startseite?utm_source=goo{$kodiert}gle&utm_medium=cp{$kodiert}c&utm_campaign=a{$kodiert}Referrer:%20evil.example&utm_term=t{$kodiert}",
+            ['Referer' => 'https://google.com/']
+        )->assertOk();
+
+        $mail = $this->sendeAnfrage();
+
+        $this->assertZeilenfolge($mail, 'google_ads', '/startseite', 'google.com', '-');
+        $werte = $this->herkunftWerte();
+        $this->assertContains('google', $werte);
+        $this->assertContains('cpc', $werte);
+        $this->assertContains('aReferrer: evil.example', $werte);
+        $this->assertContains('t', $werte);
+        $this->assertGespeichertOhneSteuerzeichen();
+    }
+
+    // AK4, AK6 (Regression)
+    #[DataProvider('steuerzeichen')]
+    public function test_steuerzeichen_in_klick_id_erzeugen_keine_zusaetzliche_zeile_und_der_wert_bleibt_aus_der_mail(string $kodiert, string $roh): void
+    {
+        $this->besuche("/startseite?gclid=ABC{$kodiert}Referrer:%20evil.example", ['Referer' => 'https://google.com/'])->assertOk();
+
+        $mail = $this->sendeAnfrage();
+
+        // Gegenprobe: der bereinigte Wert wurde erfasst, die Mail nennt nur den Namen
+        $this->assertContains('ABCReferrer: evil.example', $this->herkunftWerte());
+        $this->assertZeilenfolge($mail, 'google_ads', '/startseite', 'google.com', 'gclid');
+        $this->assertKlickIdWertNieInMail($mail, 'evil.example');
+        $this->assertGespeichertOhneSteuerzeichen();
+    }
+
+    // AK4 (Regression)
+    #[DataProvider('steuerzeichen')]
+    public function test_steuerzeichen_im_formularwert_site_erzeugen_keine_zusaetzliche_zeile(string $kodiert, string $roh): void
+    {
+        $this->besuche('/startseite', ['Referer' => 'https://google.com/'])->assertOk();
+
+        $mail = $this->sendeAnfrage(site: "https://example.com/a{$roh}Referrer: evil.example");
+        $inhalt = $this->inhalt($mail);
+
+        // Gegenprobe: Referrer-Zeile ist die echte, genau eine
+        $this->assertZeilenfolge($mail, 'organisch/sonstige', '/startseite', 'google.com', '-');
+        $this->assertSame('https://example.com/aReferrer: evil.example', DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+        $this->assertSame('https://example.com/aReferrer: evil.example', $this->siteText($inhalt['text']));
+        $this->assertSame('https://example.com/aReferrer: evil.example', $this->htmlWert($inhalt['html'], 'Site:'));
+        $this->assertGespeichertOhneSteuerzeichen();
+    }
+
+    // Randfall 10
+    #[DataProvider('steuerzeichen')]
+    public function test_site_mit_steuerzeichen_und_kodiertem_klick_id_namen_wird_bereinigt_und_entfernt(string $kodiert, string $roh): void
+    {
+        $this->besuche('/startseite?utm_source=google&utm_medium=cpc', ['Referer' => 'https://google.com/'])->assertOk();
+
+        $mail = $this->sendeAnfrage(site: "https://example.com/a?gcl%69d=GEHEIM1{$roh}Referrer: evil.example&x=1");
+
+        $this->assertZeilenfolge($mail, 'google_ads', '/startseite', 'google.com', '-');
+        $this->assertKlickIdWertNieInMail($mail, 'GEHEIM1');
+        $this->assertSame('https://example.com/a?x=1', DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+        $this->assertGespeichertOhneSteuerzeichen();
+    }
+
+    // Randfall 10 (AK4, AK6)
+    #[DataProvider('steuerzeichen')]
+    public function test_kodierter_name_mit_steuerzeichen_im_wert_in_query_und_site(string $kodiert, string $roh): void
+    {
+        $this->besuche("/seite/abc{$kodiert}Referrer:%20evil.example?gcl%69d=KODIERT42{$kodiert}Referrer:%20evil.example&utm_source=google", ['Referer' => 'https://google.com/'])
+            ->assertOk();
+
+        $mail = $this->sendeAnfrage(site: "https://example.com/a?gcl%69d=KODIERT42{$roh}Referrer:%20evil.example&utm_source=google");
+
+        $this->assertContains('KODIERT42Referrer: evil.example', $this->herkunftWerte());
+        $this->assertZeilenfolge($mail, 'google_ads', '/seite/abcReferrer: evil.example', 'google.com', 'gclid');
+        $this->assertKlickIdWertNieInMail($mail, 'KODIERT42');
+        $this->assertSame('https://example.com/a?utm_source=google', DB::table('kontaktformular')->orderByDesc('id')->value('url'));
+        $this->assertGespeichertOhneSteuerzeichen();
     }
 }
