@@ -6,7 +6,7 @@ Lösung ohne Einwilligung: keine neuen Cookies, nichts im Browser speichern. Die
 Anlass: Dashboard-Task #85 (Projekt kontaktformular), Bezug #84 (`anfrage-bcc`).
 
 ## Akzeptanzkriterien
-- **AK1 — Erfassen beim ersten Request:** Gegeben eine Session ohne gespeicherte Herkunft — Wenn ein Request über die Middleware-Gruppe `web` läuft — Dann stehen in der Session: die vorhandenen Query-Parameter `gclid`, `gbraid`, `wbraid`, `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, die Einstiegsseite als Pfad ohne Query (z. B. `/excel-programmierer`) und vom `Referer`-Header nur der Host (z. B. `google.com`).
+- **AK1 — Erfassen beim ersten Request:** Gegeben eine Session ohne gespeicherte Herkunft — Wenn ein Request über die Middleware-Gruppe `web` läuft — Dann stehen in der Session: die vorhandenen Query-Parameter `gclid`, `gbraid`, `wbraid`, `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, die Einstiegsseite als URL-dekodierter Pfad ohne Query (z. B. `/excel-programmierer`, `/über-uns` statt `/%C3%BCber-uns`) und vom `Referer`-Header nur der Host (z. B. `google.com`).
 - **AK2 — First Touch:** Gegeben eine Session mit gespeicherter Herkunft — Wenn weitere Requests folgen, auch mit anderen oder neuen Parametern bzw. einem anderen Referrer — Dann bleiben die gespeicherten Werte unverändert.
 - **AK3 — Speichern mit der Anfrage:** Wenn eine gültige Anfrage abgeschickt wird — Dann steht die Herkunft der Session in der neuen, nullable JSON-Spalte `herkunft` der Tabelle `kontaktformular` (Migration im Paket). Ist in der Session keine Herkunft gespeichert, bleibt die Spalte `null`, und die Anfrage wird trotzdem gespeichert und verschickt.
 - **AK4 — Zeilen in der Mail:** Wenn die Mail `Anfrage` verschickt wird — Dann enthalten HTML- und Text-Teil direkt nach `Site:` die Zeilen `Herkunft:`, `Einstieg:`, `Referrer:` und `Klick-ID:`, z. B. im Text-Teil:
@@ -21,9 +21,9 @@ Anlass: Dashboard-Task #85 (Projekt kontaktformular), Bezug #84 (`anfrage-bcc`).
   - `google_ads`, wenn `gclid`, `gbraid` oder `wbraid` vorhanden ist oder `utm_source=google` und `utm_medium=cpc`;
   - sonst `organisch/sonstige`, wenn ein Referrer vorhanden ist;
   - sonst `direkt`.
-- **AK6 — Klick-ID ohne Wert:** `Klick-ID:` nennt nur den Namen des vorhandenen Parameters (`gclid`, `gbraid` oder `wbraid`), sonst `-`. Der Wert der Klick-ID steht nie in der Mail, weder im HTML- noch im Text-Teil.
+- **AK6 — Klick-ID ohne Wert:** `Klick-ID:` nennt nur den Namen des vorhandenen Parameters (`gclid`, `gbraid` oder `wbraid`), sonst `-`. Der Wert der Klick-ID steht nie in der Mail, weder im HTML- noch im Text-Teil — auch nicht über `Site:`: Der Controller entfernt beim Speichern die Parameter `gclid`, `gbraid` und `wbraid` aus dem Formularwert `site` (Spalte `url`); alle übrigen Bestandteile der URL, auch `utm_*`, bleiben unverändert. *Ergänzt 2026-10-26 nach Review, freigegeben durch den User.*
 - **AK7 — Kein neuer Cookie:** Wenn ein Request mit `?gclid=…&utm_source=…` gesendet wird — Dann setzt die Response genau dieselben Cookies (nach Namen) wie derselbe Request ohne diese Parameter. Das Paket schreibt nichts in `localStorage` oder `sessionStorage` und liefert dafür kein JavaScript aus.
-- **AK8 — Bestehende Zeilen unverändert:** Die Zeilen `Nummer:`, `Datum:` und `Site:` im Text-Teil bleiben in Wortlaut, Reihenfolge und Format unverändert.
+- **AK8 — Bestehende Zeilen unverändert:** Die Zeilen `Nummer:`, `Datum:` und `Site:` im Text-Teil bleiben in Bezeichnung, Reihenfolge und Format unverändert; der Wert von `Site:` enthält keine Klick-ID-Parameter (AK6), sonst ist er der übermittelte Wert. *Angepasst 2026-10-26 nach Review, freigegeben durch den User.*
 - **AK9 — Dokumentiert:** Die README beschreibt die Middleware (wird automatisch in die Gruppe `web` eingehängt), die erfassten Werte, die neuen Mail-Zeilen, die Spalte `herkunft` und den Hinweis für die Datenschutzerklärung der Site.
 
 ## Randfälle
@@ -47,5 +47,5 @@ Anlass: Dashboard-Task #85 (Projekt kontaktformular), Bezug #84 (`anfrage-bcc`).
 ## Entscheidungsspielraum
 - Einordnung (AK5/AK6) an **einer** Stelle, z. B. in einer Klasse oder einem Value Object `Herkunft`, die Mail-Views nutzen sie nur. *Warum:* Die Regel darf nicht in zwei Views getrennt auseinanderlaufen.
 - Name des Session-Schlüssels, Name der Middleware-Klasse und Aufbau des JSON wählt der Coder. Im JSON stehen nur die erfassten Werte aus AK1.
-- Die Middleware wird im ServiceProvider an die Gruppe `web` angehängt und läuft deshalb nach `StartSession`.
+- Die Middleware wird im ServiceProvider in die Gruppe `web` **direkt nach `StartSession`** eingefügt (Gruppe und Middleware-Priorität), damit sie auch bei Abbruch durch CSRF, `auth` oder `throttle` erfasst (AK1). Middlewares, die andere Pakete in `web` einhängen (z. B. `userauth`), bleiben erhalten — am HTTP-Kernel nur per `afterResolving` ergänzen, nie einen bereits aufgelösten Kernel seine Gruppen auf den Router schreiben lassen. *Geändert 2026-10-26 nach Review/Optimierungslauf.*
 - Keine neuen Pakete.
