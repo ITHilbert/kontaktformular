@@ -13,6 +13,7 @@ use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Middleware\HerkunftErfassen;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 use ITHilbert\Kontaktformular\ValueObjects\Herkunft;
+use ITHilbert\Kontaktformular\ValueObjects\SiteAdresse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
@@ -45,7 +46,7 @@ final class KontaktformularController extends Controller
         $kontakt->telefon = $validated['Telefon'] ?? null;
         $kontakt->nachricht = $validated['Nachricht'];
         $kontakt->datenverarbeitung = (bool) $validated['datenverarbeitung'];
-        $kontakt->url = $validated['site'];
+        $kontakt->url = SiteAdresse::aus($validated['site'])->ohneKlickIds();
 
         $herkunft = $this->herkunftAusSession($request);
         if ($herkunft !== null) {

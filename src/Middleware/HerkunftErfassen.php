@@ -52,10 +52,22 @@ final class HerkunftErfassen
         foreach (Herkunft::PARAMETER as $name) {
             $daten[$name] = $query[$name] ?? null;
         }
-        $daten['einstieg'] = '/'.ltrim($request->path(), '/');
+        $daten['einstieg'] = $this->einstieg($request);
         $daten['referrer'] = $this->referrerHost($request);
 
         return Herkunft::fromArray($daten);
+    }
+
+    /**
+     * Pfad ohne Query, URL-dekodiert (`/über-uns` statt `/%C3%BCber-uns`). Ergibt das Dekodieren
+     * kein gültiges UTF-8, bleibt der Pfad kodiert – sonst ließe er sich nicht als JSON speichern.
+     */
+    private function einstieg(Request $request): string
+    {
+        $dekodiert = $request->decodedPath();
+        $pfad = mb_check_encoding($dekodiert, 'UTF-8') ? $dekodiert : $request->path();
+
+        return '/'.ltrim($pfad, '/');
     }
 
     /**

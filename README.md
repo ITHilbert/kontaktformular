@@ -45,9 +45,14 @@ return [
 
 Das Paket merkt sich, woher ein Besucher kam, und schickt diese Herkunft mit der Anfrage mit – auch wenn er vor dem Formular weitere Seiten aufruft.
 
+### Update eines bestehenden Projekts
+
+- `php artisan migrate` ist beim Update **Pflicht** (neue Spalte `herkunft`); ohne sie schlägt das Speichern fehl, sobald eine Herkunft erfasst wurde.
+- Wer die Mail-Views veröffentlicht hat (`php artisan vendor:publish --tag=kontaktformular-views`), muss sie **neu veröffentlichen** (`--force`) und eigene Anpassungen übernehmen – sonst fehlen die neuen Zeilen in der Mail.
+
 ### Middleware
 
-Die Middleware `ITHilbert\Kontaktformular\Middleware\HerkunftErfassen` wird vom ServiceProvider **automatisch an die Middleware-Gruppe `web` angehängt** (läuft nach `StartSession`). Im Projekt ist nichts einzutragen. Routen außerhalb von `web` (z. B. `api`, ohne Session) bleiben unberührt.
+Die Middleware `ITHilbert\Kontaktformular\Middleware\HerkunftErfassen` wird vom ServiceProvider **automatisch in die Middleware-Gruppe `web` eingehängt**, und zwar **direkt nach `StartSession`** (in der Gruppe und in der Middleware-Priorität). So wird die Herkunft auch erfasst, wenn CSRF-Prüfung, `auth` oder `throttle` den Request danach abbrechen. Middlewares, die andere Pakete in `web` einhängen (z. B. `userauth`), bleiben erhalten. Im Projekt ist nichts einzutragen. Routen außerhalb von `web` (z. B. `api`, ohne Session) bleiben unberührt.
 
 Erfasst wird nur beim **ersten Request einer Session** (First Touch); spätere Requests ändern die gespeicherten Werte nicht. Ist der erste Request schon `POST /anfrage`, zählt dieser.
 
@@ -57,7 +62,7 @@ Erfasst wird nur beim **ersten Request einer Session** (First Touch); spätere R
 |---|---|
 | `gclid`, `gbraid`, `wbraid` | Query-Parameter (Google-Ads-Klick-IDs) |
 | `utm_source`, `utm_medium`, `utm_campaign`, `utm_term` | Query-Parameter |
-| `einstieg` | Pfad der ersten Seite ohne Query, z. B. `/excel-programmierer` |
+| `einstieg` | Pfad der ersten Seite ohne Query, URL-dekodiert, z. B. `/excel-programmierer`, `/über-uns` (statt `/%C3%BCber-uns`) |
 | `referrer` | nur der Host aus dem `Referer`-Header, z. B. `google.com` |
 
 - Nur vorhandene Werte werden gespeichert. Leere Parameter und Arrays (`?gclid[]=x`) werden ignoriert, Werte über 255 Zeichen auf 255 gekürzt.
@@ -81,6 +86,7 @@ Klick-ID: gclid
 - `Herkunft:` ist `google_ads`, wenn `gclid`, `gbraid` oder `wbraid` vorhanden ist oder `utm_source=google` und `utm_medium=cpc` (Groß-/Kleinschreibung egal); sonst `organisch/sonstige`, wenn ein Referrer vorhanden ist; sonst `direkt`.
 - `Klick-ID:` nennt nur den **Namen** des Parameters (bei mehreren den ersten in der Reihenfolge `gclid`, `gbraid`, `wbraid`), nie seinen Wert.
 - Fehlt ein Wert für `Einstieg:`, `Referrer:` oder `Klick-ID:`, steht dort `-`.
+- Die Klick-IDs `gclid`, `gbraid` und `wbraid` werden beim Speichern aus der übermittelten Seitenadresse (Formularwert `site`, Spalte `url`, Zeile `Site:`) **entfernt**. Alle übrigen Bestandteile bleiben unverändert, auch `utm_*`; war die Klick-ID der einzige Parameter, entfällt das `?`.
 
 ### Hinweis für die Datenschutzerklärung
 
