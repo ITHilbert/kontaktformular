@@ -91,7 +91,7 @@ final class AnfrageHerkunftTest extends TestCase
      */
     private function besuche(string $url, array $header = []): TestResponse
     {
-        return $this->withHeaders($header)->get($url);
+        return $this->get($url, $header);
     }
 
     /**
@@ -103,8 +103,7 @@ final class AnfrageHerkunftTest extends TestCase
     {
         $vorher = Mail::sent(Anfrage::class)->count();
 
-        $this->withHeaders($header)
-            ->post(route('anfrage').$query, $this->gueltigeAnfrage())
+        $this->post(route('anfrage').$query, $this->gueltigeAnfrage(), $header)
             ->assertRedirect(route('danke_formular'));
 
         $gesendet = Mail::sent(Anfrage::class);

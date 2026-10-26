@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 use ITHilbert\Kontaktformular\Tests\TestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class LoeschfristTest extends TestCase
 {
@@ -21,8 +22,8 @@ final class LoeschfristTest extends TestCase
         parent::setUp();
 
         $this->originalStoragePath = $this->app->storagePath();
-        $this->tempStoragePath     = sys_get_temp_dir() . '/kontaktformular-loeschfrist-' . uniqid('', true);
-        File::makeDirectory($this->tempStoragePath . '/app/kontaktformular', 0755, true);
+        $this->tempStoragePath = sys_get_temp_dir().'/kontaktformular-loeschfrist-'.uniqid('', true);
+        File::makeDirectory($this->tempStoragePath.'/app/kontaktformular', 0755, true);
         $this->app->useStoragePath($this->tempStoragePath);
 
         Schema::dropIfExists('kontaktformular');
@@ -42,6 +43,7 @@ final class LoeschfristTest extends TestCase
             $table->string('file_size')->nullable();
             $table->timestamp('file_downloaded_at')->nullable();
             $table->timestamp('file_deleted_at')->nullable();
+            $table->json('herkunft')->nullable();
             $table->timestamps();
         });
 
@@ -59,15 +61,15 @@ final class LoeschfristTest extends TestCase
 
     private function anfrage(int $alterInTagen, ?string $hash = null, bool $dateiAnlegen = true): Kontaktformular
     {
-        $anfrage = new Kontaktformular();
+        $anfrage = new Kontaktformular;
         $anfrage->fill([
-            'url'               => 'http://localhost',
-            'name'              => 'Test ' . uniqid(),
-            'email'             => 'test@example.com',
-            'nachricht'         => 'Nachricht',
+            'url' => 'http://localhost',
+            'name' => 'Test '.uniqid(),
+            'email' => 'test@example.com',
+            'nachricht' => 'Nachricht',
             'datenverarbeitung' => true,
-            'file_hash'         => $hash,
-            'file_name'         => $hash === null ? null : 'anhang.pdf',
+            'file_hash' => $hash,
+            'file_name' => $hash === null ? null : 'anhang.pdf',
         ]);
         $anfrage->created_at = now()->subDays($alterInTagen)->subMinute();
         $anfrage->updated_at = $anfrage->created_at;
@@ -82,7 +84,7 @@ final class LoeschfristTest extends TestCase
 
     private function dateiPfad(string $hash): string
     {
-        return storage_path('app/kontaktformular/' . $hash . '.zip');
+        return storage_path('app/kontaktformular/'.$hash.'.zip');
     }
 
     // AK1
@@ -181,7 +183,7 @@ final class LoeschfristTest extends TestCase
     public function test_anhaenge_werden_nach_eigener_frist_geloescht_und_datensatz_bleibt(): void
     {
         config()->set('kontaktformular.dateien_loeschen_nach_tagen', 10);
-        $alt  = $this->anfrage(11, 'hash-alt');
+        $alt = $this->anfrage(11, 'hash-alt');
         $jung = $this->anfrage(9, 'hash-jung');
 
         $this->artisan('kontaktformular:delete_old_files')->assertSuccessful();
@@ -211,7 +213,7 @@ final class LoeschfristTest extends TestCase
         config()->set('kontaktformular.anfragen_loeschen_nach_tagen', 20);
 
         for ($i = 0; $i < 7; $i++) {
-            $this->anfrage(15, 'hash-' . $i);
+            $this->anfrage(15, 'hash-'.$i);
         }
         for ($i = 0; $i < 4; $i++) {
             $this->anfrage(25);
@@ -267,23 +269,23 @@ final class LoeschfristTest extends TestCase
     public static function ungueltigeWerte(): array
     {
         return [
-            'dateien null'      => ['dateien_loeschen_nach_tagen', 0],
-            'dateien negativ'   => ['dateien_loeschen_nach_tagen', -5],
-            'dateien text'      => ['dateien_loeschen_nach_tagen', 'abc'],
+            'dateien null' => ['dateien_loeschen_nach_tagen', 0],
+            'dateien negativ' => ['dateien_loeschen_nach_tagen', -5],
+            'dateien text' => ['dateien_loeschen_nach_tagen', 'abc'],
             'dateien kommazahl' => ['dateien_loeschen_nach_tagen', 1.5],
-            'anfragen null'     => ['anfragen_loeschen_nach_tagen', 0],
-            'anfragen negativ'  => ['anfragen_loeschen_nach_tagen', -5],
-            'anfragen text'     => ['anfragen_loeschen_nach_tagen', 'abc'],
+            'anfragen null' => ['anfragen_loeschen_nach_tagen', 0],
+            'anfragen negativ' => ['anfragen_loeschen_nach_tagen', -5],
+            'anfragen text' => ['anfragen_loeschen_nach_tagen', 'abc'],
             'anfragen kommazahl' => ['anfragen_loeschen_nach_tagen', 1.5],
         ];
     }
 
     // Randfall: ungültiger Wert
     // AK4
-    #[\PHPUnit\Framework\Attributes\DataProvider('ungueltigeWerte')]
+    #[DataProvider('ungueltigeWerte')]
     public function test_ungueltiger_wert_bricht_ab_und_loescht_nichts(string $schluessel, mixed $wert): void
     {
-        config()->set('kontaktformular.' . $schluessel, $wert);
+        config()->set('kontaktformular.'.$schluessel, $wert);
         $alt = $this->anfrage(500, 'hash-alt');
 
         $this->artisan('kontaktformular:delete_old_files')->assertFailed();
