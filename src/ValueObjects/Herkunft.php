@@ -103,8 +103,16 @@ final readonly class Herkunft
             return null;
         }
 
-        $wert = trim($wert);
+        $wert = trim(self::ohneSteuerzeichen($wert));
 
         return $wert === '' ? null : mb_substr($wert, 0, self::MAX_LAENGE);
+    }
+
+    /**
+     * Entfernt Steuerzeichen (Unicode-Kategorie Cc: U+0000–001F, U+007F–009F) ersatzlos; bytegenau, daher auch bei ungültigem UTF-8.
+     */
+    public static function ohneSteuerzeichen(string $wert): string
+    {
+        return preg_replace('/[\x00-\x1F\x7F]|\xC2[\x80-\x9F]/', '', $wert) ?? '';
     }
 }

@@ -17,11 +17,11 @@ final readonly class SiteAdresse
 
     public static function aus(string $wert): self
     {
-        return new self($wert);
+        return new self(Herkunft::ohneSteuerzeichen($wert));
     }
 
     /**
-     * Entfernt `gclid`, `gbraid` und `wbraid` (exakter Parametername); ohne Klick-ID bleibt der Wert unverändert.
+     * Entfernt `gclid`, `gbraid` und `wbraid` (Parametername so dekodiert, wie PHP ihn liest); ohne Klick-ID bleibt der Wert unverändert.
      */
     public function ohneKlickIds(): string
     {
@@ -35,7 +35,7 @@ final readonly class SiteAdresse
         $paare = explode('&', $query);
         $behalten = array_values(array_filter(
             $paare,
-            static fn (string $paar): bool => ! in_array(explode('=', $paar, 2)[0], Herkunft::KLICK_IDS, true),
+            static fn (string $paar): bool => ! in_array(urldecode(explode('=', $paar, 2)[0]), Herkunft::KLICK_IDS, true),
         ));
 
         if (count($behalten) === count($paare)) {

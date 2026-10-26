@@ -39,6 +39,17 @@ Anlass: Dashboard-Task #85 (Projekt kontaktformular), Bezug #84 (`anfrage-bcc`).
 
 10. Werte aus dem Request mit Steuerzeichen (z. B. `%0A`, `%0D` im Pfad, in UTM-Werten, Klick-IDs oder im Formularwert `site`) → die Steuerzeichen werden entfernt, bevor sie gespeichert oder in die Mail geschrieben werden; es entsteht keine zusätzliche Zeile (AK4). Prozentkodierte Parameternamen (`gcl%69d`) gelten wie der dekodierte Name (`gclid`), auch beim Entfernen aus `site` (AK6). *Ergänzt 2026-10-26 nach dem zweiten Review, freigegeben durch den User („Fix als Bugfix gegen die bestehenden AKs“); `site` vom Moderator ergänzt.*
 
+## Klarstellungen aus der Umsetzung
+*Auslegungen der Coder, vom Moderator am 2026-10-26 in die Spec übernommen — Freigabe durch den User offen.*
+- **K1 (Randfall 9):** Erkannt wird der Cookie-Treiber am Session-Handler (`CookieSessionHandler`), damit zählen auch eigene Treibernamen, die ihn nutzen.
+- **K2 (Randfall 5):** Werte werden vor der Prüfung auf „leer“ getrimmt; nur Leerzeichen = leer.
+- **K3 (Randfall 4):** Der Referrer-Host wird kleingeschrieben und als Hostname geprüft (`FILTER_VALIDATE_DOMAIN`); IPv6-Literale und Hosts mit Umlauten in Unicode-Form gelten als kein Referrer.
+- **K4 (AK2):** Die Herkunft bleibt nach dem Absenden in der Session; weitere Anfragen derselben Session bekommen dieselbe Herkunft.
+- **K5 (Entscheidungsspielraum):** Fehlt `StartSession` in `web`, wird die Middleware angehängt; fehlt es in der Priorität, bleibt die Priorität unverändert. Unterklassen von `StartSession` zählen als `StartSession`.
+- **K6 (AK1):** Ergibt das Dekodieren des Einstiegs kein gültiges UTF-8, bleibt er kodiert (sonst wäre er nicht als JSON speicherbar).
+- **K7 (AK6):** Eine Klick-ID im Fragment (`#…`) von `site` bleibt stehen; `gclid[]=…` ist keine Klick-ID (Randfall 5); leere Paare (`&&`) bleiben erhalten.
+- **K8 (Randfall 10):** In `site` werden rohe Steuerzeichen entfernt; prozentkodierte (`%0A`) bleiben kodiert stehen, weil `site` nicht dekodiert wird und so keine neue Zeile entsteht.
+
 ## Nicht-Ziele
 - Den Wert der `gclid` für einen Offline-Conversion-Upload an Google weitergeben.
 - Auswertung der Zeile `Herkunft:` im Lead-Skript (`ads-warehouse/ads_warehouse/leads/parsing.py`), das macht der Marketing-Agent.
