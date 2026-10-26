@@ -9,9 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
+use ITHilbert\Kontaktformular\Middleware\HerkunftErfassen;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
+use ITHilbert\Kontaktformular\ValueObjects\Herkunft;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use ZipArchive;
 
@@ -29,22 +30,27 @@ final class KontaktformularController extends Controller
         }
 
         $validated = $request->validate([
-            'Name'              => 'required|string|max:255',
-            'Email'             => 'required|email|max:255',
-            'Telefon'           => 'nullable|string|max:50',
-            'Nachricht'         => 'required|string',
+            'Name' => 'required|string|max:255',
+            'Email' => 'required|email|max:255',
+            'Telefon' => 'nullable|string|max:50',
+            'Nachricht' => 'required|string',
             'datenverarbeitung' => 'required|accepted',
-            'site'              => 'required|string|max:2048',
-            'Datei'             => 'nullable|file|max:10240|mimes:pdf,jpg,png,zip,doc,docx,xls,xlsx',
+            'site' => 'required|string|max:2048',
+            'Datei' => 'nullable|file|max:10240|mimes:pdf,jpg,png,zip,doc,docx,xls,xlsx',
         ]);
 
-        $kontakt = new Kontaktformular();
-        $kontakt->name              = $validated['Name'];
-        $kontakt->email             = $validated['Email'];
-        $kontakt->telefon           = $validated['Telefon'] ?? null;
-        $kontakt->nachricht         = $validated['Nachricht'];
+        $kontakt = new Kontaktformular;
+        $kontakt->name = $validated['Name'];
+        $kontakt->email = $validated['Email'];
+        $kontakt->telefon = $validated['Telefon'] ?? null;
+        $kontakt->nachricht = $validated['Nachricht'];
         $kontakt->datenverarbeitung = (bool) $validated['datenverarbeitung'];
-        $kontakt->url               = $validated['site'];
+        $kontakt->url = $validated['site'];
+
+        $herkunft = $this->herkunftAusSession($request);
+        if ($herkunft !== null) {
+            $kontakt->herkunft = $herkunft;
+        }
 
         if ($request->hasFile('Datei') && $request->file('Datei')->isValid()) {
             $this->attachUploadedFile($request, $kontakt);
@@ -68,7 +74,7 @@ final class KontaktformularController extends Controller
             abort(404, 'Datei nicht gefunden.');
         }
 
-        $path = storage_path('app/kontaktformular/' . $hash . '.zip');
+        $path = storage_path('app/kontaktformular/'.$hash.'.zip');
         if (! file_exists($path)) {
             abort(410, 'Datei nicht mehr vorhanden.');
         }
@@ -76,12 +82,13 @@ final class KontaktformularController extends Controller
         $kontakt->file_downloaded_at = now();
         $kontakt->save();
 
-        return response()->download($path, $name . '.zip')->deleteFileAfterSend(false);
+        return response()->download($path, $name.'.zip')->deleteFileAfterSend(false);
     }
 
     public function danke_formular()
     {
         $active = 'index';
+
         return view('kontaktformular::danke_formular')->with(compact('active'));
     }
 
@@ -91,26 +98,42 @@ final class KontaktformularController extends Controller
     public function danke_bot_formular()
     {
         $active = 'index';
+
         return view('kontaktformular::danke_bot_formular')->with(compact('active'));
+    }
+
+    /**
+     * @return array<string, string>|null
+     */
+    private function herkunftAusSession(Request $request): ?array
+    {
+        $daten = $request->hasSession() ? $request->session()->get(HerkunftErfassen::SESSION_KEY) : null;
+        if (! is_array($daten)) {
+            return null;
+        }
+
+        $herkunft = Herkunft::fromArray($daten)->toArray();
+
+        return $herkunft === [] ? null : $herkunft;
     }
 
     private function attachUploadedFile(Request $request, Kontaktformular $kontakt): void
     {
-        $upload       = $request->file('Datei');
+        $upload = $request->file('Datei');
         $originalName = $upload->getClientOriginalName();
-        $safeName     = preg_replace('/[^a-zA-Z0-9\-\_\.]/', '', basename($originalName));
-        $dateityp     = $upload->extension();
-        $nameOhneExt  = pathinfo($safeName, PATHINFO_FILENAME);
+        $safeName = preg_replace('/[^a-zA-Z0-9\-\_\.]/', '', basename($originalName));
+        $dateityp = $upload->extension();
+        $nameOhneExt = pathinfo($safeName, PATHINFO_FILENAME);
 
         $storedPath = $upload->store('kontaktformular');
-        $hash       = str_replace('kontaktformular/', '', $storedPath);
-        $hash       = str_replace('.' . $dateityp, '', $hash);
+        $hash = str_replace('kontaktformular/', '', $storedPath);
+        $hash = str_replace('.'.$dateityp, '', $hash);
 
         if ($dateityp !== 'zip') {
-            $sourcePath = storage_path('app/kontaktformular/' . $hash . '.' . $dateityp);
-            $zipPath    = storage_path('app/kontaktformular/' . $hash . '.zip');
+            $sourcePath = storage_path('app/kontaktformular/'.$hash.'.'.$dateityp);
+            $zipPath = storage_path('app/kontaktformular/'.$hash.'.zip');
 
-            $zip = new ZipArchive();
+            $zip = new ZipArchive;
             $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
             $zip->addFile($sourcePath, $safeName);
             $zip->close();

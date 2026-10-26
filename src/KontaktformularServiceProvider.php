@@ -4,18 +4,24 @@ declare(strict_types=1);
 
 namespace ITHilbert\Kontaktformular;
 
+use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use ITHilbert\Kontaktformular\Middleware\HerkunftErfassen;
 
 class KontaktformularServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/Resources/views', 'kontaktformular');
-        $this->loadTranslationsFrom(__DIR__ . '/Resources/lang', 'kontaktformular');
-        $this->loadRoutesFrom(__DIR__ . '/Routes/web.php');
-        $this->loadMigrationsFrom(__DIR__ . '/Database/Migrations');
+        $this->loadViewsFrom(__DIR__.'/Resources/views', 'kontaktformular');
+        $this->loadTranslationsFrom(__DIR__.'/Resources/lang', 'kontaktformular');
+        $this->loadRoutesFrom(__DIR__.'/Routes/web.php');
+        $this->loadMigrationsFrom(__DIR__.'/Database/Migrations');
 
-        $this->mergeConfigFrom(__DIR__ . '/Config/config.php', 'kontaktformular');
+        $this->mergeConfigFrom(__DIR__.'/Config/config.php', 'kontaktformular');
+
+        $this->registriereHerkunftMiddleware();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -23,21 +29,34 @@ class KontaktformularServiceProvider extends ServiceProvider
             ]);
 
             $this->publishes([
-                __DIR__ . '/Config/config.php' => config_path('kontaktformular.php'),
+                __DIR__.'/Config/config.php' => config_path('kontaktformular.php'),
             ], 'kontaktformular-config');
 
             $this->publishes([
-                __DIR__ . '/Resources/assets' => public_path('vendor/kontaktformular'),
+                __DIR__.'/Resources/assets' => public_path('vendor/kontaktformular'),
             ], 'kontaktformular-assets');
 
             $this->publishes([
-                __DIR__ . '/Resources/views' => resource_path('views/vendor/kontaktformular'),
+                __DIR__.'/Resources/views' => resource_path('views/vendor/kontaktformular'),
             ], 'kontaktformular-views');
         }
     }
 
-    #[\Override]
-    public function register(): void
+    /**
+     * Hängt die Middleware an die Gruppe `web` (nach `StartSession`). Der HTTP-Kernel überschreibt
+     * die Gruppen des Routers beim Auflösen, deshalb wird sie dort ergänzt, sobald er bereitsteht.
+     */
+    private function registriereHerkunftMiddleware(): void
     {
+        $this->app->make(Router::class)->pushMiddlewareToGroup('web', HerkunftErfassen::class);
+
+        $this->callAfterResolving(HttpKernelContract::class, static function (HttpKernelContract $kernel): void {
+            if ($kernel instanceof HttpKernel && array_key_exists('web', $kernel->getMiddlewareGroups())) {
+                $kernel->appendMiddlewareToGroup('web', HerkunftErfassen::class);
+            }
+        });
     }
+
+    #[\Override]
+    public function register(): void {}
 }

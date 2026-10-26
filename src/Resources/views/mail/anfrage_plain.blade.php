@@ -12,3 +12,6 @@ Datei: {{$kontakt->file_name}}.{{$kontakt->file_type}} - Link: {{ $fileUrl }}
 Datenverarbeitung: {{ $kontakt->datenverarbeitung == 1 ? 'ja' : 'nein'}}
 Datum: {{ $kontakt->created_at }}
 Site: {{ $kontakt->url }}
+@foreach($herkunftZeilen as $bezeichnung => $wert)
+{{ $bezeichnung }}: {{ $wert }}
+@endforeach
