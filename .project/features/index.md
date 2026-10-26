@@ -1,4 +1,5 @@
 ## In Arbeit
+- [anfrage-bcc](anfrage-bcc/plan.md) — Kopie jeder Anfrage per BCC an das Lead-Postfach (Dashboard #84)
 
 ## Geplant
 - AK4-Test von loeschfrist prüft nur Ziffern, nicht die Beschriftung (Review-Hinweis)
