@@ -48,6 +48,10 @@ final class AnfrageHerkunftTest extends TestCase
             foreach (['/excel-programmierer', '/preise', '/startseite'] as $pfad) {
                 $router->get($pfad, fn () => response()->json(['session' => request()->hasSession()]));
             }
+
+            $router->get('/login', fn () => response('login'))->name('login');
+            $router->get('/intern', fn () => response()->json(['intern' => true]))->middleware('auth');
+            $router->get('/begrenzt', fn () => response()->json(['begrenzt' => true]))->middleware('throttle:1,1');
         });
 
         $router->middleware('api')->get('/api-ohne-session', fn () => response()->json(['session' => request()->hasSession()]));
@@ -325,6 +329,53 @@ final class AnfrageHerkunftTest extends TestCase
             $this->assertStringNotContainsString('search', $wert);
             $this->assertStringNotContainsString('https', $wert);
         }
+    }
+
+    // ------------------------------------------------------------------
+    // AK1 — Regression: Middleware-Reihenfolge (abgebrochene Requests)
+    // ------------------------------------------------------------------
+
+    // AK1 (Regression: Middleware-Reihenfolge)
+    public function test_request_den_auth_mit_redirect_abbricht_erfasst_trotzdem_die_herkunft(): void
+    {
+        // Gegenprobe: dieselbe Folge ohne den ersten Request (frische Session) ergibt google_ads
+        $this->besuche('/startseite?gclid=x')->assertOk();
+        $this->assertHerkunftZeilen($this->sendeAnfrage(), 'google_ads', '/startseite', '-', 'gclid');
+
+        $this->neueSession();
+
+        // Aufbau greift: die Route bricht per Redirect auf den Login ab
+        $this->besuche('/intern?utm_campaign=erst', ['Referer' => 'https://duckduckgo.com/'])
+            ->assertRedirect(route('login'));
+        $this->besuche('/startseite?gclid=x')->assertOk();
+
+        $mail = $this->sendeAnfrage();
+
+        $this->assertHerkunftZeilen($mail, 'organisch/sonstige', '/intern', 'duckduckgo.com', '-');
+        $this->assertEqualsCanonicalizing(['erst', '/intern', 'duckduckgo.com'], $this->herkunftWerte());
+    }
+
+    // AK1 (Regression: Middleware-Reihenfolge)
+    public function test_request_den_throttle_mit_429_abweist_erfasst_trotzdem_die_herkunft(): void
+    {
+        // Limit mit einer anderen Session ausschöpfen
+        $this->besuche('/begrenzt')->assertOk();
+        $this->neueSession();
+
+        // Aufbau greift: der erste Request der frischen Session wird abgewiesen
+        $this->besuche('/begrenzt?utm_campaign=erst', ['Referer' => 'https://duckduckgo.com/'])
+            ->assertStatus(429);
+        $this->besuche('/startseite?gclid=x')->assertOk();
+
+        $mail = $this->sendeAnfrage();
+
+        $this->assertHerkunftZeilen($mail, 'organisch/sonstige', '/begrenzt', 'duckduckgo.com', '-');
+        $this->assertEqualsCanonicalizing(['erst', '/begrenzt', 'duckduckgo.com'], $this->herkunftWerte());
+
+        // Gegenprobe: dieselbe Folge ohne den abgewiesenen ersten Request ergibt google_ads
+        $this->neueSession();
+        $this->besuche('/startseite?gclid=x')->assertOk();
+        $this->assertHerkunftZeilen($this->sendeAnfrage(), 'google_ads', '/startseite', '-', 'gclid');
     }
 
     // ------------------------------------------------------------------
