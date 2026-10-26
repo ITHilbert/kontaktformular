@@ -35,6 +35,7 @@ Anlass: Dashboard-Task #85 (Projekt kontaktformular), Bezug #84 (`anfrage-bcc`).
 6. Der erste Request einer Session ist schon `POST /anfrage` → Herkunft wird aus diesem Request erfasst (Einstieg `/anfrage`) und mit der Anfrage gespeichert.
 7. Request ohne Session (Route außerhalb `web`, z. B. `api`) → die Middleware tut nichts, kein Fehler.
 8. Bestehende Datensätze → `herkunft` bleibt `null`, kein Nachbefüllen.
+9. Session-Treiber `cookie` (`session.driver`) → die Middleware speichert nichts, weil die Session-Daten dann im Browser lägen. Die Anfrage wird mit `herkunft = null` gespeichert, die Mail-Zeilen zeigen `direkt` bzw. `-`. *Ergänzt durch den Moderator am 2026-10-26 (DSGVO-konforme Wahl, ohne Rückfrage nach Rule `entscheidungsbefugnis.md`).*
 
 ## Nicht-Ziele
 - Den Wert der `gclid` für einen Offline-Conversion-Upload an Google weitergeben.
