@@ -1,4 +1,5 @@
 ## In Arbeit
+- [anfrage-herkunft](anfrage-herkunft/plan.md) — Herkunft (gclid/UTM, Einstieg, Referrer) serverseitig in der Session merken und in der Anfrage-Mail mitsenden (Dashboard #85)
 
 ## Geplant
 - anfrage-bcc: ungültige Adresse in `mailBcc` wirft RfcComplianceException → auch `mailTo` bekommt keine Mail, Besucher sieht 500 (Review 2026-10-26); Vorschlag: ungültige BCC-Adressen verwerfen und loggen
