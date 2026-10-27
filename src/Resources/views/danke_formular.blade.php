@@ -4,7 +4,7 @@
 @section('head.keywords', "")
 @section('head.description', config('site.firma') .", Danke für Ihre Nachricht")
 @section('meta')
-    @include('header.robots_disallow')
+    <meta name="robots" content="noindex, nofollow">
 @stop
 
 

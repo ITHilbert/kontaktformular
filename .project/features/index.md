@@ -1,5 +1,4 @@
 ## In Arbeit
-- [danke-seiten-robots](danke-seiten-robots/plan.md) — Danke-Seiten ohne Host-View `header.robots_disallow` (Bugfix, 500 im Host packages_dev)
 
 ## Geplant
 - Spalte `url` ist `string(255)`, Validierung von `site` erlaubt 2048 → lange Seitenadressen scheitern im strikten SQL-Modus (Anfrage geht verloren) (Doku 2026-10-26)
@@ -19,6 +18,7 @@
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
+- [danke-seiten-robots](danke-seiten-robots/plan.md) — Danke-Seiten bringen ihr Robots-Meta selbst mit, keine Host-View `header.robots_disallow` mehr nötig (2026-10-27)
 - [anfrage-herkunft](anfrage-herkunft/plan.md) — Herkunft (gclid/UTM, Einstieg, Referrer) serverseitig in der Session, Spalte `herkunft`, Zeilen in der Anfrage-Mail (Dashboard #85) (2026-10-26)
 - [anfrage-bcc](anfrage-bcc/plan.md) — Kopie jeder Anfrage per BCC an das Lead-Postfach (Dashboard #84) (2026-10-26)
 - [download-route](download-route/plan.md) — Tests für die Download-Route (404/410/Download) (2026-10-23)
