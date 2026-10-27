@@ -1,7 +1,6 @@
 ## In Arbeit
 
 ## Geplant
-- Danke-Seiten (`danke_formular`, `danke_bot_formular`) binden die Host-View `header.robots_disallow` ein – fehlt sie (z. B. Host packages_dev), antwortet die Seite mit 500; README nennt nur `layouts.master`/`layouts.masterBot`
 - Spalte `url` ist `string(255)`, Validierung von `site` erlaubt 2048 → lange Seitenadressen scheitern im strikten SQL-Modus (Anfrage geht verloren) (Doku 2026-10-26)
 - `nummer` per `max+1` ohne Unique-Index/Sperre (Race-Condition bei gleichzeitigen Anfragen)
 - README-Abschnitt „Routen“ dupliziert `.project/doku/07_API-Definitionen.md` und lässt `throttle` weg → auf das Leitdokument verweisen
@@ -19,6 +18,7 @@
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
+- [danke-seiten-robots](danke-seiten-robots/plan.md) — Danke-Seiten bringen ihr Robots-Meta selbst mit, keine Host-View `header.robots_disallow` mehr nötig (2026-10-27)
 - [anfrage-herkunft](anfrage-herkunft/plan.md) — Herkunft (gclid/UTM, Einstieg, Referrer) serverseitig in der Session, Spalte `herkunft`, Zeilen in der Anfrage-Mail (Dashboard #85) (2026-10-26)
 - [anfrage-bcc](anfrage-bcc/plan.md) — Kopie jeder Anfrage per BCC an das Lead-Postfach (Dashboard #84) (2026-10-26)
 - [download-route](download-route/plan.md) — Tests für die Download-Route (404/410/Download) (2026-10-23)
