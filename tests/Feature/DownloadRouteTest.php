@@ -6,6 +6,7 @@ namespace ITHilbert\Kontaktformular\Tests\Feature;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 use ITHilbert\Kontaktformular\Tests\TestCase;
 
@@ -15,14 +16,16 @@ use ITHilbert\Kontaktformular\Tests\TestCase;
  */
 final class DownloadRouteTest extends TestCase
 {
-    /** @var list<string> */
-    private array $angelegteDateien = [];
-
-    private bool $verzeichnisAngelegt = false;
+    private string $temp;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->temp = sys_get_temp_dir().'/kontaktformular-download-'.uniqid('', true);
+        File::makeDirectory($this->temp.'/private/kontaktformular', 0755, true);
+        config()->set('filesystems.disks.local.root', $this->temp.'/private');
+        Storage::forgetDisk('local');
 
         Schema::dropIfExists('kontaktformular');
         Schema::create('kontaktformular', function ($table) {
@@ -48,21 +51,14 @@ final class DownloadRouteTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach ($this->angelegteDateien as $pfad) {
-            File::delete($pfad);
-        }
-
-        $verzeichnis = storage_path('app/kontaktformular');
-        if ($this->verzeichnisAngelegt && is_dir($verzeichnis) && count(File::files($verzeichnis)) === 0) {
-            File::deleteDirectory($verzeichnis);
-        }
+        File::deleteDirectory($this->temp);
 
         parent::tearDown();
     }
 
     private function dateiPfad(string $hash): string
     {
-        return storage_path('app/kontaktformular/'.$hash.'.zip');
+        return Storage::disk((string) config('kontaktformular.disk', 'local'))->path('kontaktformular/'.$hash.'.zip');
     }
 
     private function anfrage(string $hash, string $name = 'anhang'): Kontaktformular
@@ -84,15 +80,7 @@ final class DownloadRouteTest extends TestCase
 
     private function legeDateiAn(string $hash, string $inhalt): void
     {
-        $verzeichnis = storage_path('app/kontaktformular');
-        if (! is_dir($verzeichnis)) {
-            File::makeDirectory($verzeichnis, 0755, true);
-            $this->verzeichnisAngelegt = true;
-        }
-
-        $pfad = $this->dateiPfad($hash);
-        file_put_contents($pfad, $inhalt);
-        $this->angelegteDateien[] = $pfad;
+        file_put_contents($this->dateiPfad($hash), $inhalt);
     }
 
     private function eindeutigerHash(): string

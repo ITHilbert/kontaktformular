@@ -292,7 +292,7 @@ final class AnhaengeDiskTest extends TestCase
     {
         $anfrage = $this->upload($this->pdf());
         $this->get($this->link($anfrage))->assertOk();
-        $anfrage->forceFill(['file_downloaded_at' => null])->save();
+        Kontaktformular::whereKey($anfrage->id)->update(['file_downloaded_at' => null]);
 
         Storage::disk('local')->delete('kontaktformular/'.$anfrage->file_hash.'.zip');
 
@@ -305,7 +305,7 @@ final class AnhaengeDiskTest extends TestCase
     {
         $anfrage = $this->upload($this->pdf());
         $this->get($this->link($anfrage))->assertOk();
-        $anfrage->forceFill(['file_downloaded_at' => null])->save();
+        Kontaktformular::whereKey($anfrage->id)->update(['file_downloaded_at' => null]);
 
         $this->get(route('kontaktformular.file', ['hash' => $anfrage->file_hash.'x', 'name' => $anfrage->file_name, 'id' => $anfrage->id]))->assertNotFound();
         $this->get(route('kontaktformular.file', ['hash' => $anfrage->file_hash, 'name' => 'anders', 'id' => $anfrage->id]))->assertNotFound();
