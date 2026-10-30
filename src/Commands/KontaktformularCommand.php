@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ITHilbert\Kontaktformular\Commands;
 
 use Illuminate\Console\Command;
+use ITHilbert\Kontaktformular\Anhangablage;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 
 final class KontaktformularCommand extends Command
@@ -84,10 +85,7 @@ final class KontaktformularCommand extends Command
             return false;
         }
 
-        $datei = storage_path('app/kontaktformular/' . $anfrage->file_hash . '.zip');
-        if (file_exists($datei)) {
-            unlink($datei);
-        }
+        (new Anhangablage)->loeschen($anfrage->file_hash);
 
         return $anfrage->file_deleted_at === null;
     }

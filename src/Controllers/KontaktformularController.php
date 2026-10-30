@@ -9,13 +9,13 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
+use ITHilbert\Kontaktformular\Anhangablage;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Middleware\HerkunftErfassen;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 use ITHilbert\Kontaktformular\ValueObjects\Herkunft;
 use ITHilbert\Kontaktformular\ValueObjects\SiteAdresse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use ZipArchive;
 
 final class KontaktformularController extends Controller
 {
@@ -75,15 +75,15 @@ final class KontaktformularController extends Controller
             abort(404, 'Datei nicht gefunden.');
         }
 
-        $path = storage_path('app/kontaktformular/'.$hash.'.zip');
-        if (! file_exists($path)) {
+        $ablage = new Anhangablage;
+        if (! $ablage->existiert($hash)) {
             abort(410, 'Datei nicht mehr vorhanden.');
         }
 
         $kontakt->file_downloaded_at = now();
         $kontakt->save();
 
-        return response()->download($path, $name.'.zip')->deleteFileAfterSend(false);
+        return response()->download($ablage->lokalerPfad($hash), $name.'.zip')->deleteFileAfterSend(false);
     }
 
     public function danke_formular()
@@ -126,21 +126,7 @@ final class KontaktformularController extends Controller
         $dateityp = $upload->extension();
         $nameOhneExt = pathinfo($safeName, PATHINFO_FILENAME);
 
-        $storedPath = $upload->store('kontaktformular');
-        $hash = str_replace('kontaktformular/', '', $storedPath);
-        $hash = str_replace('.'.$dateityp, '', $hash);
-
-        if ($dateityp !== 'zip') {
-            $sourcePath = storage_path('app/kontaktformular/'.$hash.'.'.$dateityp);
-            $zipPath = storage_path('app/kontaktformular/'.$hash.'.zip');
-
-            $zip = new ZipArchive;
-            $zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
-            $zip->addFile($sourcePath, $safeName);
-            $zip->close();
-
-            unlink($sourcePath);
-        }
+        $hash = (new Anhangablage)->speichern($upload, $safeName, $dateityp);
 
         $kontakt->file_name = $nameOhneExt;
         $kontakt->file_hash = $hash;
