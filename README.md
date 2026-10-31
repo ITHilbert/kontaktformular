@@ -30,6 +30,8 @@ return [
     'fileDownloadUrl' => env('APP_URL') . '/kontaktformular/file/',
     'dateien_loeschen_nach_tagen'  => env('KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN', 30),
     'anfragen_loeschen_nach_tagen' => env('KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN'),
+    'disk'                         => env('KONTAKTFORMULAR_DISK', 'local'),
+    'loeschen_einplanen'           => env('KONTAKTFORMULAR_LOESCHEN_EINPLANEN', true),
 ];
 ```
 
@@ -117,7 +119,7 @@ Beide Werte müssen positive ganze Zahlen sein. Bei ungültigem Wert bricht der 
 
 **Achtung:** `KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN=` ohne Wert gilt als ungültig – dann stoppt auch die Löschung der Anhänge. Die Zeile entweder mit Zahl setzen oder ganz weglassen.
 
-Anhänge liegen unter `storage/app/kontaktformular/`. Zeigt die Disk `local` des Projekts auf `storage/app/private` (Laravel-11-Skelett), findet der Command die Dateien dort nicht.
+Anhänge liegen auf der Disk `KONTAKTFORMULAR_DISK` (Standard `local`) unter `kontaktformular/<hash>.zip`; bei Laravel 11+ ist das physisch `storage/app/private/kontaktformular/`. Die Disk braucht einen lokalen Pfad (das ZIP entsteht mit `ZipArchive`); Remote-Disks wie S3 werden nicht unterstützt. Vorhandene Anhänge werden nicht verschoben.
 
 ## Command
 
@@ -127,16 +129,23 @@ php artisan kontaktformular:delete_old_files
 
 Löscht zuerst die Anfragen nach der Anfragenfrist, danach die Anhänge nach der Dateifrist, und gibt die Zahl gelöschter Anhänge und Anfragen aus. Eine bereits fehlende Anhang-Datei ist kein Fehler.
 
-**Wichtig:** Das Paket plant den Command nicht selbst ein. Das Projekt muss ihn im Scheduler eintragen, z. B. `Schedule::command('kontaktformular:delete_old_files')->daily();`.
+**Scheduler:** Das Paket plant den Command täglich selbst ein. Mit `KONTAKTFORMULAR_LOESCHEN_EINPLANEN=false` (auch `0`, `off`) entfällt die Einplanung. Plant ein Projekt ihn zusätzlich selbst ein, ist die doppelte Ausführung harmlos.
 
 ## Routen
 
 ```php
 Route::post('anfrage', [KontaktformularController::class, 'anfrage'])->name('anfrage');
+Route::get('kontaktformular/csrf-token', [KontaktformularController::class, 'csrf_token'])->name('kontaktformular.csrf_token');
 Route::get('danke-formular', [KontaktformularController::class, 'danke_formular'])->name('danke_formular');
 Route::get('danke-bot-formular', [KontaktformularController::class, 'danke_bot_formular'])->name('danke_bot_formular');
 Route::get('kontaktformular/file/{hash}/{name}/{id}', [KontaktformularController::class, 'file_download'])->name('kontaktformular.file');
 ```
+
+### CSRF-Token auffrischen
+
+`GET /kontaktformular/csrf-token` (Name `kontaktformular.csrf_token`) liefert `{"token": "..."}` mit `Cache-Control: no-store`. Die Vue-Komponente ruft sie beim Absenden auf und setzt das Token neu, damit eine abgelaufene Sitzung (z. B. Seite per „Zurück“ aus dem Cache) nicht zu 419 führt. Kommt die Seite per „Zurück“ aus dem Browser-Cache (`pageshow` mit `persisted`) und blieb der JS-Zustand erhalten, wird das Absenden wieder freigegeben. Schlägt der Abruf fehl, wird mit dem vorhandenen Token abgesendet. Die Route gilt nur für die gleiche Herkunft (kein CORS); die CSRF-Prüfung von `POST /anfrage` bleibt unverändert. Die URL kommt als Prop `token-route` (Vorgabe `/kontaktformular/csrf-token`).
+
+**Update:** Hosts, die die Komponente (`src/Resources/Vue/kontaktformular.vue`) in ihr Bundle bauen, müssen nach dem Update neu bauen (`npm run production`).
 
 ## Views
 

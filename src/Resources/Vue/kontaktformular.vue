@@ -1,6 +1,6 @@
 <template>
-    <form method="POST" v-bind:action="route" enctype="multipart/form-data">
-        <input type="hidden" name="_token" v-bind:value="csrf" />
+    <form method="POST" v-bind:action="route" enctype="multipart/form-data" v-on:submit.prevent="absenden" ref="formular">
+        <input type="hidden" name="_token" v-bind:value="csrf" ref="token" />
         <input type="hidden" name="site" v-bind:value="currentUrl" />
 
         <input type="text" name="fax" class="n-bot" tabindex="-1" autocomplete="off">
@@ -30,9 +30,15 @@
 
 
 <script>
+import { erzeugeTokenAuffrischer } from './tokenAuffrischen.mjs';
+
 export default {
     props: {
         'route': '',
+        'tokenRoute': {
+            type: String,
+            default: '/kontaktformular/csrf-token',
+        },
     },
     data: function(){
         return {
@@ -41,6 +47,30 @@ export default {
     },
     mounted() {
         this.csrf = document.querySelector('meta[name="csrf-token"]').content;
+        window.addEventListener('pageshow', this.beiPageshow);
+    },
+    beforeDestroy() {
+        window.removeEventListener('pageshow', this.beiPageshow);
+    },
+    methods: {
+        beiPageshow(event) {
+            // Seite kommt per „Zurück“ aus dem Browser-Cache: Absenden wieder freigeben.
+            if (event.persisted && this.absender) {
+                this.absender.zuruecksetzen();
+            }
+        },
+        absenden() {
+            // Natives submit() löst kein erneutes submit-Event aus; das Feld wird direkt im DOM gesetzt,
+            // v-bind:value="csrf" überschreibt es nicht, solange csrf unverändert bleibt.
+            if (!this.absender) {
+                this.absender = erzeugeTokenAuffrischer({
+                    formular: this.$refs.formular,
+                    feld: this.$refs.token,
+                    url: this.tokenRoute,
+                });
+            }
+            return this.absender.absenden();
+        },
     },
     computed: {
         currentUrl() {
