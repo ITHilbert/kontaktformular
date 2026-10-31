@@ -301,8 +301,9 @@ final class HerkunftSchalterTest extends TestCase
     #[WithEnv(self::ENV, 'off')]
     public function test_aus_router_gruppe_web_enthaelt_die_middleware_nicht(): void
     {
-        // Gegenprobe: Schalter ist aus und die Gruppe web ist aufgebaut
+        // Gegenprobe: Schalter ist aus; der Kernel ist aufgelöst und hat die Gruppe web in den Router übernommen
         $this->assertSame(false, config('kontaktformular.herkunft_erfassen'));
+        $this->spaetAufgeloesterKernel();
         $gruppe = $this->webGruppeRouter();
         $this->assertContains(StartSession::class, $gruppe);
 
@@ -313,8 +314,9 @@ final class HerkunftSchalterTest extends TestCase
     #[WithEnv(self::ENV, 'off')]
     public function test_aus_router_prioritaet_enthaelt_die_middleware_nicht(): void
     {
-        // Gegenprobe: Schalter ist aus und die Priorität ist aufgebaut
+        // Gegenprobe: Schalter ist aus; der Kernel ist aufgelöst und hat die Priorität in den Router übernommen
         $this->assertSame(false, config('kontaktformular.herkunft_erfassen'));
+        $this->spaetAufgeloesterKernel();
         $prioritaet = $this->app->make(Router::class)->middlewarePriority;
         $this->assertContains(StartSession::class, $prioritaet);
 
