@@ -7,6 +7,7 @@ namespace ITHilbert\Kontaktformular\Tests\Feature;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 use ITHilbert\Kontaktformular\Tests\TestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -23,8 +24,10 @@ final class LoeschfristTest extends TestCase
 
         $this->originalStoragePath = $this->app->storagePath();
         $this->tempStoragePath = sys_get_temp_dir().'/kontaktformular-loeschfrist-'.uniqid('', true);
-        File::makeDirectory($this->tempStoragePath.'/app/kontaktformular', 0755, true);
+        File::makeDirectory($this->tempStoragePath.'/app/private/kontaktformular', 0755, true);
         $this->app->useStoragePath($this->tempStoragePath);
+        config()->set('filesystems.disks.local.root', $this->tempStoragePath.'/app/private');
+        Storage::forgetDisk('local');
 
         Schema::dropIfExists('kontaktformular');
         Schema::create('kontaktformular', function ($table) {
@@ -84,7 +87,7 @@ final class LoeschfristTest extends TestCase
 
     private function dateiPfad(string $hash): string
     {
-        return storage_path('app/kontaktformular/'.$hash.'.zip');
+        return Storage::disk((string) config('kontaktformular.disk', 'local'))->path('kontaktformular/'.$hash.'.zip');
     }
 
     // AK1

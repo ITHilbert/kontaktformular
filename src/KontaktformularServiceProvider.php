@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ITHilbert\Kontaktformular;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Http\Kernel as HttpKernelContract;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Routing\Router;
@@ -23,6 +24,7 @@ class KontaktformularServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/Config/config.php', 'kontaktformular');
 
         $this->registriereHerkunftMiddleware();
+        $this->planeLoeschungEin();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -41,6 +43,18 @@ class KontaktformularServiceProvider extends ServiceProvider
                 __DIR__.'/Resources/views' => resource_path('views/vendor/kontaktformular'),
             ], 'kontaktformular-views');
         }
+    }
+
+    /**
+     * Plant das Löschen alter Anhänge täglich ein; die Config wird beim Auflösen des Schedule gelesen.
+     */
+    private function planeLoeschungEin(): void
+    {
+        $this->callAfterResolving(Schedule::class, static function (Schedule $schedule): void {
+            if (filter_var(config('kontaktformular.loeschen_einplanen', true), FILTER_VALIDATE_BOOL)) {
+                $schedule->command('kontaktformular:delete_old_files')->daily();
+            }
+        });
     }
 
     /**

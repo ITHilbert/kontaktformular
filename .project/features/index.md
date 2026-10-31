@@ -1,4 +1,6 @@
 ## In Arbeit
+- [anhaenge-disk](anhaenge-disk/spec.md) — Anhänge über die Storage-Disk, Löschung eingeplant (Dashboard #119)
+- [csrf-token](csrf-token/spec.md) — #120 CSRF-Token vor dem Absenden auffrischen (Token-Route, Vue-Komponente)
 
 ## Geplant
 - Spalte `url` ist `string(255)`, Validierung von `site` erlaubt 2048 → lange Seitenadressen scheitern im strikten SQL-Modus (Anfrage geht verloren) (Doku 2026-10-26)
@@ -14,7 +16,6 @@
 - Text-Teil der Mail maskiert HTML (`{{ }}` in `anfrage_plain.blade.php`) – relevant fürs Lead-Skript
 - AK4-Test von loeschfrist prüft nur Ziffern, nicht die Beschriftung (Review-Hinweis)
 - Command lädt Treffer per `get()` → bei großen Beständen `chunkById()`
-- Speicherpfad `storage/app/kontaktformular` fest; Projekte mit Laravel-11-Skelett (`storage/app/private`) prüfen
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
