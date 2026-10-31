@@ -15,4 +15,8 @@ return [
     'dateien_loeschen_nach_tagen' => env('KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN', 30),
     // Anfragen samt Anhang werden nach dieser Zahl Tage gelöscht; null = Anfragen nie löschen.
     'anfragen_loeschen_nach_tagen' => env('KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN'),
+
+    // Herkunft (UTM, Klick-ID, Referrer) erfassen und mit der Anfrage speichern.
+    // Aus bei false, 0, off, no oder leerem Wert; sonst an (Standard).
+    'herkunft_erfassen' => filter_var(env('KONTAKTFORMULAR_HERKUNFT_ERFASSEN', true), FILTER_VALIDATE_BOOL),
 ];
