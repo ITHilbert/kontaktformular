@@ -126,10 +126,17 @@ Löscht zuerst die Anfragen nach der Anfragenfrist, danach die Anhänge nach der
 
 ```php
 Route::post('anfrage', [KontaktformularController::class, 'anfrage'])->name('anfrage');
+Route::get('kontaktformular/csrf-token', [KontaktformularController::class, 'csrf_token'])->name('kontaktformular.csrf_token');
 Route::get('danke-formular', [KontaktformularController::class, 'danke_formular'])->name('danke_formular');
 Route::get('danke-bot-formular', [KontaktformularController::class, 'danke_bot_formular'])->name('danke_bot_formular');
 Route::get('kontaktformular/file/{hash}/{name}/{id}', [KontaktformularController::class, 'file_download'])->name('kontaktformular.file');
 ```
+
+### CSRF-Token auffrischen
+
+`GET /kontaktformular/csrf-token` (Name `kontaktformular.csrf_token`) liefert `{"token": "..."}` mit `Cache-Control: no-store`. Die Vue-Komponente ruft sie beim Absenden auf und setzt das Token neu, damit eine abgelaufene Sitzung (z. B. Seite per „Zurück“ aus dem Cache) nicht zu 419 führt. Kommt die Seite per „Zurück“ aus dem Browser-Cache (`pageshow` mit `persisted`) und blieb der JS-Zustand erhalten, wird das Absenden wieder freigegeben. Schlägt der Abruf fehl, wird mit dem vorhandenen Token abgesendet. Die Route gilt nur für die gleiche Herkunft (kein CORS); die CSRF-Prüfung von `POST /anfrage` bleibt unverändert. Die URL kommt als Prop `token-route` (Vorgabe `/kontaktformular/csrf-token`).
+
+**Update:** Hosts, die die Komponente (`src/Resources/Vue/kontaktformular.vue`) in ihr Bundle bauen, müssen nach dem Update neu bauen (`npm run production`).
 
 ## Views
 
