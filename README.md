@@ -30,6 +30,8 @@ return [
     'fileDownloadUrl' => env('APP_URL') . '/kontaktformular/file/',
     'dateien_loeschen_nach_tagen'  => env('KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN', 30),
     'anfragen_loeschen_nach_tagen' => env('KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN'),
+    'disk'                         => env('KONTAKTFORMULAR_DISK', 'local'),
+    'loeschen_einplanen'           => env('KONTAKTFORMULAR_LOESCHEN_EINPLANEN', true),
 ];
 ```
 
@@ -108,7 +110,7 @@ Beide Werte müssen positive ganze Zahlen sein. Bei ungültigem Wert bricht der 
 
 **Achtung:** `KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN=` ohne Wert gilt als ungültig – dann stoppt auch die Löschung der Anhänge. Die Zeile entweder mit Zahl setzen oder ganz weglassen.
 
-Anhänge liegen unter `storage/app/kontaktformular/`. Zeigt die Disk `local` des Projekts auf `storage/app/private` (Laravel-11-Skelett), findet der Command die Dateien dort nicht.
+Anhänge liegen auf der Disk `KONTAKTFORMULAR_DISK` (Standard `local`) unter `kontaktformular/<hash>.zip`; bei Laravel 11+ ist das physisch `storage/app/private/kontaktformular/`. Die Disk braucht einen lokalen Pfad (das ZIP entsteht mit `ZipArchive`); Remote-Disks wie S3 werden nicht unterstützt. Vorhandene Anhänge werden nicht verschoben.
 
 ## Command
 
@@ -118,7 +120,7 @@ php artisan kontaktformular:delete_old_files
 
 Löscht zuerst die Anfragen nach der Anfragenfrist, danach die Anhänge nach der Dateifrist, und gibt die Zahl gelöschter Anhänge und Anfragen aus. Eine bereits fehlende Anhang-Datei ist kein Fehler.
 
-**Wichtig:** Das Paket plant den Command nicht selbst ein. Das Projekt muss ihn im Scheduler eintragen, z. B. `Schedule::command('kontaktformular:delete_old_files')->daily();`.
+**Scheduler:** Das Paket plant den Command täglich selbst ein. Mit `KONTAKTFORMULAR_LOESCHEN_EINPLANEN=false` (auch `0`, `off`) entfällt die Einplanung. Plant ein Projekt ihn zusätzlich selbst ein, ist die doppelte Ausführung harmlos.
 
 ## Routen
 

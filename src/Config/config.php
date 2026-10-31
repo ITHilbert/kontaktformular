@@ -15,4 +15,9 @@ return [
     'dateien_loeschen_nach_tagen' => env('KONTAKTFORMULAR_DATEIEN_LOESCHEN_NACH_TAGEN', 30),
     // Anfragen samt Anhang werden nach dieser Zahl Tage gelöscht; null = Anfragen nie löschen.
     'anfragen_loeschen_nach_tagen' => env('KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN'),
+
+    // Storage-Disk für Anhänge (Pfad `kontaktformular/<hash>.zip` auf der Disk). Nur Disks mit lokalem Pfad.
+    'disk' => env('KONTAKTFORMULAR_DISK', 'local'),
+    // Löschen alter Anhänge täglich im Scheduler einplanen.
+    'loeschen_einplanen' => env('KONTAKTFORMULAR_LOESCHEN_EINPLANEN', true),
 ];
