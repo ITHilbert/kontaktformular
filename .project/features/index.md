@@ -1,4 +1,5 @@
 ## In Arbeit
+- [herkunft-schalter](herkunft-schalter/spec.md) — #110 Herkunftserfassung per Config abschaltbar (`herkunft_erfassen`)
 
 ## Geplant
 - Spalte `url` ist `string(255)`, Validierung von `site` erlaubt 2048 → lange Seitenadressen scheitern im strikten SQL-Modus (Anfrage geht verloren) (Doku 2026-10-26)
