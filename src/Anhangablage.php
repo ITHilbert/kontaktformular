@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ITHilbert\Kontaktformular;
 
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
