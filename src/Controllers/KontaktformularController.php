@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ITHilbert\Kontaktformular\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -62,6 +63,16 @@ final class KontaktformularController extends Controller
         Mail::to(config('kontaktformular.mailTo'))->send(new Anfrage($kontakt));
 
         return redirect()->route('danke_formular');
+    }
+
+    /**
+     * Frisches CSRF-Token der aktuellen Sitzung (wird vor dem Absenden von der Vue-Komponente geholt).
+     */
+    public function csrf_token(): JsonResponse
+    {
+        return response()
+            ->json(['token' => csrf_token()])
+            ->header('Cache-Control', 'no-store, private');
     }
 
     /**
