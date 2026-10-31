@@ -14,10 +14,11 @@
 ## Randfälle
 - Besucher klickt während des Abrufs erneut auf „Anfrage senden“ → es wird trotzdem nur einmal abgesendet.
 - Die Route wird von einer fremden Seite per JavaScript abgefragt → ohne CORS-Freigabe kann sie die Antwort nicht lesen (Same-Origin); das Paket setzt keine CORS-Header.
+- Seite kommt per „Zurück“ aus dem Browser-Cache (`pageshow` mit `event.persisted`, JS-Zustand erhalten) → die Sperre gegen Doppelklick wird aufgehoben; das nächste Absenden holt wieder ein frisches Token und sendet genau einmal ab. Das Modul bietet dafür eine Funktion zum Zurücksetzen, die Komponente ruft sie bei `pageshow` mit `persisted` auf. Ohne Zurücksetzen bleibt ein zweites Absenden wirkungslos (Randfall 1). *Ergänzt 2026-10-31 im NACHWEIS (Moderator): Mit erhaltenem JS-Zustand blieb der Knopf nach „Zurück“ ohne Wirkung — genau der Ablauf aus #120.*
 - Token-URL: Die Komponente bekommt sie als Prop (`token-route`, gesetzt in `show.blade.php` per `route('kontaktformular.csrf_token')`); fehlt die Prop, gilt `/kontaktformular/csrf-token`.
 
 ## Nicht-Ziele
-- Auffrischen bei `pageshow` (`event.persisted`) — das Auffrischen beim Absenden deckt den Ablauf vollständig ab.
+- Token schon bei `pageshow` holen (vor dem Absenden) — das Holen beim Absenden genügt; bei `pageshow` wird nur die Sperre zurückgesetzt (Randfall 3). *Geändert 2026-10-31.*
 - Änderungen an der 419-Seite der Hosts.
 - Release/Tag, Rollout (it-hilbert.com baut danach neu).
 
