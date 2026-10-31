@@ -58,3 +58,49 @@ Das Verhalten erfüllt jedes AK und jeden Randfall, belegt durch eigene Sonden u
 Nicht freigegeben, weil der Produktionsweg von AK2 („Router-Gruppe `web`“, Router-„Middleware-Priorität“) und damit auch die Session-Aussage von AK3 durch keinen Test abgesichert ist, der ohne den Schalter rot würde. Alle Router-Tests lösen vorher den Kernel neu auf, und der überschreibt den Router (Sonde-Mutante). Ein Umbau, der nur den Router-Zweig aus dem Schalter nimmt, bliebe grün, und in Produktion würde die Herkunft wieder in der Session erfasst. Gerade diesen Weg nutzt excel-programmierer.com aus DSGVO-Gründen.
 
 Nötig ist ein Test (test-writer), der bei aus den Router direkt nach dem Boot prüft, ohne den Kernel neu aufzulösen. Gegenprobe im selben Test: `! $this->app->resolved(HttpKernelContract::class)`; bei an zeigt die Sonde, dass `web` dort `[HerkunftErfassen]` enthält. Alternativ einen Kernel nachstellen, der vor dem Boot aufgelöst wird. Am Produktivcode ist nichts zu ändern.
+
+---
+
+# Nachprüfung: herkunft-schalter (kontaktformular, Dashboard #110) — 2026-10-31 (Nachprüfung seit Paket c27d59d)
+
+Geprüft im Review-Platz `/home/joerg/projekte/.worktrees/packages_dev/reviewer`, Host `fix/herkunft-schalter-2` (5e2f5ef), Paket kontaktformular `fix/herkunft-schalter` (06bb424). Die Spec ist seit der ersten Prüfung unverändert. Der Fix besteht nur aus Tests (06bb424, +24 Zeilen in `tests/Feature/HerkunftSchalterTest.php`), der Produktivcode ist unverändert. Deshalb gibt es kein volles Review. Host: nur der Submodul-Stand (da54088, 5e2f5ef).
+
+Mutanten-Methode: Mutierte Kopien von `KontaktformularServiceProvider` liegen im Scratchpad (`…/scratchpad/mutant110/A.php`, `B.php`, `C.php`). Eine eigene Bootstrap-Datei lädt sie per vorangestelltem Autoloader vor dem Composer-Autoloader. Aufruf: `MUTANTE=<x> php vendor/bin/phpunit -c phpunit.xml --bootstrap …/mutant110/bootstrap.php packages/kontaktformular/tests/Feature/HerkunftSchalterTest.php`. Der Platz bleibt dabei unverändert.
+- **A:** Der ganze Router-Zweig (Gruppe und Priorität) steht vor dem Schalter, nur `afterResolving` ist geschützt. Das ist der Umbau aus der ersten Prüfung.
+- **B:** Nur die Router-Priorität steht vor dem Schalter.
+- **C:** Das Einhängen in die Router-Gruppe ist entfernt.
+
+| AK / Aussage (Zitat) | Ergebnis | Nachweis |
+|---|---|---|
+| AK2 „Dann steht `HerkunftErfassen` weder in der Router-Gruppe `web`“ | bestanden, jetzt durch einen Test abgesichert | Neuer Test `test_aus_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware_nicht` grün. Er belegt den Router-Zweig, ohne den Kernel neu aufzulösen: `assertFalse($this->app->resolved(HttpKernelContract::class))` steht vor und nach der Prüfung, und `config(...) === false` ist im Test geprüft. **Mutante A:** genau dieser Test wird rot („Failed asserting that an array does not contain …HerkunftErfassen“), 34 weitere grün. Ohne Mutante: 35/35 grün. Gegenprobe im Gegenstück `test_an_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware` (bei an steht `HerkunftErfassen` in der Router-Gruppe): wird bei **Mutante C** rot, die Prüfung läuft also nicht ins Leere. Produktionsweg nachgestellt (`…/mutant110/prod.php`, Host-App wie `public/index.php`: Kernel vor dem Boot, dann `bootstrap()`, nur lesend). Original bei `off`: `router_web: false`, ohne Variable `true`. Mutante A bei `off`: `router_web: true` |
+| AK2 „noch in der Middleware-Priorität“ (Router-Priorität) | nicht bestanden (Testlücke besteht weiter; Verhalten korrekt) | Die neue Zeile `assertNotContains(HerkunftErfassen::class, $router->middlewarePriority)` kann in Testbench nicht rot werden. Vor dem Auflösen des Kernels ist `Router::$middlewarePriority` dort `[]` (Standardwert in `Router.php:101`, Sonde der ersten Prüfung). Ohne `StartSession` als Anker gibt `prioritaetMitHerkunft()` die Liste unverändert zurück. **Mutante B:** HerkunftSchalterTest 35/35 grün, die Lücke ist damit belegt. In Produktion ist die Router-Priorität schon vor dem Boot vom Kernel befüllt (`prod.php`: `router_prio_hat_StartSession: true`). Mutante B setzt dort bei `off` die Middleware in die Router-Priorität (`router_prio: true`), das Original nicht (`router_prio: false`). Das Gegenstück bei an prüft die Priorität nicht, und dort wäre sie in Testbench ebenfalls leer. Die Lücke lässt sich schließen, das hat die Sonde `…/mutant110/SondeKernelVorBootTest.php` gezeigt: Mit `#[DefineEnvironment('kernelVorDemBoot')]` (`$app->make(HttpKernelContract::class)` vor dem Boot, wie `public/index.php`) enthält die Router-Priorität `StartSession`. Der Test ist dann im Original grün (an: Priorität enthält die Middleware, aus: nicht) und wird bei Mutante B rot |
+| AK2 „noch in der Middleware-Priorität“ (Kernel-Priorität) | bestanden (Prüfung c27d59d) | unverändert, Test weiter grün |
+| AK2 „noch in der Kernel-Gruppe `web`“ | bestanden (Prüfung c27d59d) | unverändert, Test weiter grün |
+| AK2 „Wenn die App bootet und der HTTP-Kernel (auch erst später) aufgelöst wird“ | bestanden | Später aufgelöster Kernel: bestehende Tests. Kernel vor dem Boot: nachgestellter Produktionsweg `prod.php` (Original, `off`: Router-Gruppe, Router-Priorität, Kernel-Gruppe und Kernel-Priorität alle ohne `HerkunftErfassen`). Durch einen Test abgesichert ist nur die Router-Gruppe, siehe oben |
+| AK6 „Dann ist `HerkunftErfassen` eingehängt“ | bestanden | Zusätzlich zur ersten Prüfung: neues Gegenstück `test_an_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware` grün und bei Mutante C rot; `prod.php` ohne Variable: `router_web: true`, `router_prio: true` |
+| AK3 „Dann enthält die Session keinen Herkunfts-Eintrag (`HerkunftErfassen::SESSION_KEY`)“ | bestanden (Prüfung c27d59d) | Produktivcode unverändert. Der Hinweis aus der ersten Prüfung gilt weiter: Der Session-Test läuft in Testbench über den Kernel-Zweig. Den Produktionsweg belegt der Echtlauf der ersten Prüfung, und die Ursache (Router-Gruppe) ist jetzt per Test abgesichert |
+| Randfall „`KONTAKTFORMULAR_HERKUNFT_ERFASSEN=` (leer) → aus“ | bestanden (Prüfung c27d59d) | Der neue Router-Test läuft nur mit `off`. Ein leerer Wert führt im Code über denselben Weg (Config-Cast → `false`, eine Prüfung im Provider). Der Cast ist durch `test_app_config_ist_bei_leerem_env_ein_bool_false` abgesichert |
+| Alle übrigen Aussagen (AK1, AK3 Spalte/Mail, AK4, AK5, AK6 Verhalten/Tests, AK7, Randfall Laufzeit/Controller, Nicht-Ziele, Entscheidungsspielraum) | bestanden / eingehalten (Prüfung c27d59d) | Produktivcode und README sind seit der ersten Prüfung inhaltlich unverändert (Feature-Diff vor und nach dem Merge verglichen, siehe Config) |
+
+### Config nach dem Merge (`src/Config/config.php`)
+- Die Konfliktlösung in c27d59d vereinigt beide Seiten korrekt. Gegenüber `nachtschicht/2026-10-31` (c27d59d^2) kommt nur der Block `herkunft_erfassen` dazu (3 Zeilen). Gegenüber dem alten Feature-Stand (c27d59d^1) kommen nur `disk` (#119) und `loeschen_einplanen` dazu. Es fehlt kein Schlüssel, und es gibt keinen doppelten.
+- `herkunft_erfassen` ist weiterhin der einzige Cast (`filter_var(…, FILTER_VALIDATE_BOOL)`), wie AK1 verlangt.
+- Der Feature-Diff gegen die Basis ist inhaltlich derselbe wie in der ersten Prüfung, nur mit verschobenen Zeilennummern: Config +3, Controller +4, Provider +4, README +9. Die Prüfung im Controller steht unverändert vor dem Speichern.
+- Kosmetik, ohne Auswirkung: Zwischen dem Block `herkunft_erfassen` und dem Kommentar zu `disk` fehlt die Leerzeile, die die übrigen Blöcke trennt.
+
+## Sicherheit (Nachprüfung)
+- Der Fix ändert nur Tests, Produktivcode ist nicht betroffen. Die Config-Vereinigung bringt keinen neuen Schlüssel aus Nutzereingaben.
+
+## Regressionen (Nachprüfung)
+- `php artisan test --parallel --compact` (voller Lauf, ohne Filter): **OK, 2077 Tests, 21548 Assertions**. Der APP_URL-Fehlschlag der ersten Prüfung ist mit #315 (b5df010, jetzt eingemergt) weg.
+- `HerkunftSchalterTest.php` einzeln: 35/35 grün (239 Assertions).
+- `laravel.log`: Die einzigen neuen ERROR-Einträge (14:33:09 UTC, `UrlGenerator … null given`) stammen vom ersten Aufruf meiner eigenen Sonde `prod.php`, noch ohne gebundenen Request. Sie kommen nicht aus dem Feature.
+
+## Neue Tasks: keine
+
+## Fazit: nicht freigegeben
+Die Kernfrage ist erfüllt. Der neue Test belegt den Router-Zweig direkt nach dem Boot, ohne den Kernel aufzulösen (Gegenprobe `resolved() === false` vor und nach der Prüfung). Er wird bei dem Umbau aus der ersten Prüfung rot (Mutante A: Router-Zweig ganz vor dem Schalter), und sein Gegenstück wird bei Mutante C rot. Für die Router-Gruppe `web`, den DSGVO-relevanten Weg, ist die Lücke geschlossen.
+
+Nicht freigegeben, weil die zweite Router-Aussage aus AK2 („noch in der Middleware-Priorität“, Router-Seite) weiter nur scheinbar getestet ist. Die neue `assertNotContains` auf `$router->middlewarePriority` prüft in Testbench eine leere Liste und bleibt grün, wenn nur die Router-Priorität aus dem Schalter fällt (Mutante B). In Produktion stünde die Middleware dann in der Router-Priorität (nachgestellt mit `prod.php`). Die erste Prüfung hatte die Router-Priorität ausdrücklich in die Begründung aufgenommen. Das heutige Verhalten ist korrekt, und eine Middleware in der Priorität ohne Gruppeneintrag wirkt nicht. Es fehlt also nur ein Test, kein Fix.
+
+Nötig (test-writer, Produktivcode bleibt): Ein Testpaar mit `#[DefineEnvironment]`, das den HTTP-Kernel vor dem Boot auflöst wie `public/index.php`. Gegenprobe im Test: `in_array(StartSession::class, $router->middlewarePriority)`, sonst ist die Prüfung wieder leer. Bei aus darf `HerkunftErfassen` in der Router-Priorität nicht stehen, bei an muss sie dort stehen. Die Sonde `/tmp/claude-1000/-home-joerg-projekte-packages-dev/e400a5d4-2284-415e-bf05-a955f4785230/scratchpad/mutant110/SondeKernelVorBootTest.php` zeigt den Aufbau: im Original grün, bei Mutante B rot. Alternativ die leere Prüfung in 06bb424 durch diesen Aufbau ersetzen.
