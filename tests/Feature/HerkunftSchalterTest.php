@@ -351,6 +351,30 @@ final class HerkunftSchalterTest extends TestCase
         $this->assertNotContains(HerkunftErfassen::class, $kernel->getMiddlewarePriority());
     }
 
+    // AK2 — Router direkt nach dem Boot (wie public/index.php: Kernel noch nicht aufgelöst)
+    #[WithEnv(self::ENV, 'off')]
+    public function test_aus_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware_nicht(): void
+    {
+        // Gegenprobe: Schalter ist aus, der Kernel wurde nicht aufgelöst (Router-Zweig, nicht Kernel-Zweig)
+        $this->assertSame(false, config('kontaktformular.herkunft_erfassen'));
+        $this->assertFalse($this->app->resolved(HttpKernelContract::class));
+        $router = $this->app->make(Router::class);
+
+        $this->assertNotContains(HerkunftErfassen::class, $router->getMiddlewareGroups()['web'] ?? []);
+        $this->assertNotContains(HerkunftErfassen::class, $router->middlewarePriority);
+        $this->assertFalse($this->app->resolved(HttpKernelContract::class));
+    }
+
+    // AK6 — Gegenstück: an, Router direkt nach dem Boot
+    public function test_an_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware(): void
+    {
+        $this->assertFalse($this->app->resolved(HttpKernelContract::class));
+        $router = $this->app->make(Router::class);
+
+        $this->assertContains(HerkunftErfassen::class, $router->getMiddlewareGroups()['web'] ?? []);
+        $this->assertFalse($this->app->resolved(HttpKernelContract::class));
+    }
+
     // ------------------------------------------------------------------
     // AK6 — Standard unverändert (Gegenstück zu AK2)
     // ------------------------------------------------------------------
