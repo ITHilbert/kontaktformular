@@ -1,4 +1,4 @@
-// Tests für src/Resources/Vue/tokenAuffrischen.mjs (Dashboard #120, AK3, AK4, Randfall 1).
+// Tests für src/Resources/Vue/tokenAuffrischen.mjs (Dashboard #120, AK3, AK4, Randfall 1, Randfall 3).
 // Lauf: node --test tests/js/tokenAuffrischen.test.mjs   (Node 22, ohne npm-Pakete)
 //
 // Schnittstelle des Moduls (vom Test festgelegt, der Coder baut danach):
@@ -8,13 +8,16 @@
 //     feld     : Objekt mit Eigenschaft value (das Eingabefeld `_token`)
 //     url      : string, Adresse der Token-Route
 //     fetchFn  : optional, Ersatz für globalThis.fetch (Vorgabe: globalThis.fetch)
-//     Rückgabe : { absenden }  mit  absenden(): Promise<void>
+//     Rückgabe : { absenden, zuruecksetzen }  mit  absenden(): Promise<void>
 //
 //   absenden() ruft fetchFn(url, { credentials: 'same-origin', cache: 'no-store', ... }) auf.
 //   Antwortet die Route mit Status 200 und JSON { token: <nicht leerer String> }, wird das Token
 //   in feld.value geschrieben. Danach (egal ob Abruf gelang oder nicht) genau ein formular.submit().
 //   Das Promise wird nie abgelehnt. Ein zweiter Aufruf von absenden(), solange der erste läuft
 //   oder bereits abgesendet wurde, tut nichts (kein zweiter Abruf, kein zweites submit()).
+//
+//   zuruecksetzen() hebt diese Sperre auf (Seite kommt per „Zurück“ aus dem Cache, pageshow mit
+//   persisted): das nächste absenden() holt wieder ein Token und ruft genau ein submit() auf.
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -233,4 +236,40 @@ test('Randfall 1: erneutes Absenden nach abgeschlossenem Absenden sendet nicht n
 
   assert.equal(t.aufrufe.length, 1);
   assert.equal(t.formular.submits, 1);
+});
+
+// Randfall 3
+test('Randfall 3: nach zuruecksetzen() holt das nächste absenden() erneut ein Token und sendet genau einmal', async () => {
+  let n = 0;
+  const t = baue({ fetchFn: async () => antwort({ json: { token: `token-${++n}` } }) });
+
+  await t.absender.absenden();
+  assert.equal(t.aufrufe.length, 1);
+  assert.equal(t.formular.submits, 1);
+
+  // Gegenprobe: ohne Zurücksetzen bleibt das zweite absenden() wirkungslos (Randfall 1)
+  await t.absender.absenden();
+  assert.equal(t.aufrufe.length, 1);
+  assert.equal(t.formular.submits, 1);
+
+  t.absender.zuruecksetzen();
+  await t.absender.absenden();
+
+  assert.equal(t.aufrufe.length, 2);
+  assert.equal(t.feld.value, 'token-2');
+  assert.equal(t.formular.submits, 2);
+  assert.deepEqual(t.formular.wertBeimSubmit, ['token-1', 'token-2']);
+});
+
+// Randfall 3
+test('Randfall 3: nach zuruecksetzen() gilt die Sperre gegen Doppelklick wieder (genau ein weiterer Abruf und submit)', async () => {
+  const t = baue({ fetchFn: erfolg() });
+
+  await t.absender.absenden();
+  t.absender.zuruecksetzen();
+
+  await Promise.all([t.absender.absenden(), t.absender.absenden()]);
+
+  assert.equal(t.aufrufe.length, 2);
+  assert.equal(t.formular.submits, 2);
 });
