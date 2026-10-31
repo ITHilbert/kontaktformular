@@ -957,10 +957,10 @@ final class AnfrageHerkunftTest extends TestCase
         $this->assertHerkunftZeilen($this->sendeAnfrage(), 'organisch/sonstige', '/startseite', 'fremd.example.org', '-');
 
         $this->neueSession();
-        $this->besuche('/startseite', ['Referer' => 'http://localhost/preise'])->assertOk();
+        $this->besuche('http://eigener-host.test/startseite', ['Referer' => 'http://eigener-host.test/preise'])->assertOk();
 
         $this->assertHerkunftZeilen($this->sendeAnfrage(), 'direkt', '/startseite', '-', '-');
-        $this->assertNotContains('localhost', $this->herkunftWerte());
+        $this->assertNotContains('eigener-host.test', $this->herkunftWerte());
     }
 
     // Randfall 4
