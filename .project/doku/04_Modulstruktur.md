@@ -10,6 +10,7 @@ src/
     Seeders/         DatabaseSeeder.php
     factories/       (leer, .gitkeep)
   Enums/             HerkunftKanal.php
+  Exceptions/        AnfrageMailNichtVersendet.php (wird per report() gemeldet, wenn der Versand nach dem Speichern scheitert)
   Mail/              Anfrage.php (Mailable)
   Middleware/        HerkunftErfassen.php
   Models/            Kontaktformular.php

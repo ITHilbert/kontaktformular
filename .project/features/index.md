@@ -1,5 +1,4 @@
 ## In Arbeit
-- [mailversand](mailversand/spec.md) — #316 Versandfehler nach gespeicherter Anfrage: Danke-Seite statt 500, Fehler gemeldet
 - [anhaenge-disk](anhaenge-disk/spec.md) — Anhänge über die Storage-Disk, Löschung eingeplant (Dashboard #119)
 - [csrf-token](csrf-token/spec.md) — #120 CSRF-Token vor dem Absenden auffrischen (Token-Route, Vue-Komponente)
 
@@ -12,7 +11,7 @@
 - anfrage-herkunft: `herkunft` steht unnötig in `$fillable` des Models
 - Laravel legt die volle URL samt `gclid` in `_previous.url` der Session ab (nur relevant beim Session-Treiber `cookie`)
 - Pint-Altbestand im Paket (lang, Commands, Routes/web.php, Migration 2023, Seeder)
-- anfrage-bcc: ungültige Adresse in `mailBcc` wirft RfcComplianceException → auch `mailTo` bekommt keine Mail, Besucher sieht 500 (Review 2026-10-26); Vorschlag: ungültige BCC-Adressen verwerfen und loggen
+- anfrage-bcc: ungültige Adresse in `mailBcc` wirft RfcComplianceException → keine Mail an `mailTo`; der Fehler wird gemeldet (Review 2026-10-26); Vorschlag: ungültige BCC-Adressen verwerfen und loggen
 - anfrage-bcc: kein Test prüft den Envelope der versendeten Mail (nur Mailable unter Mail::fake)
 - Text-Teil der Mail maskiert HTML (`{{ }}` in `anfrage_plain.blade.php`) – relevant fürs Lead-Skript
 - AK4-Test von loeschfrist prüft nur Ziffern, nicht die Beschriftung (Review-Hinweis)
@@ -20,6 +19,7 @@
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
+- [mailversand](mailversand/spec.md) — #316 Versandfehler nach gespeicherter Anfrage: Danke-Seite statt 500, Fehler gemeldet (2026-11-02)
 - [herkunft-schalter](herkunft-schalter/spec.md) — #110 Herkunftserfassung per Config abschaltbar (`herkunft_erfassen`) (2026-11-02)
 - [danke-seiten-robots](danke-seiten-robots/plan.md) — Danke-Seiten bringen ihr Robots-Meta selbst mit, keine Host-View `header.robots_disallow` mehr nötig (2026-10-27)
 - [anfrage-herkunft](anfrage-herkunft/plan.md) — Herkunft (gclid/UTM, Einstieg, Referrer) serverseitig in der Session, Spalte `herkunft`, Zeilen in der Anfrage-Mail (Dashboard #85) (2026-10-26)

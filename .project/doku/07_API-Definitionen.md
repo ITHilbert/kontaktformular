@@ -29,6 +29,7 @@ Verhalten:
 - Honeypot oder Nachricht unter der Mindestlänge: Redirect auf `danke_bot_formular`, nichts wird gespeichert oder versendet.
 - Validierungsfehler: Standard-Redirect von Laravel mit Fehlermeldungen.
 - Erfolg: Anfrage wird gespeichert, Mail an `mailTo` versendet, Redirect auf `danke_formular`.
+- Versandfehler nach dem Speichern (Ausnahme beim Versand, z. B. SMTP oder ungültige `mailBcc`-Adresse): Redirect auf `danke_formular` wie im Erfolgsfall; die Anfrage bleibt gespeichert, die Ausnahme wird per `report()` als `AnfrageMailNichtVersendet` gemeldet (Log, Kontext `id` und `nummer`). Kein 500.
 - Die Herkunft kommt nicht aus dem Request, sondern aus der Session (Key `kontaktformular_herkunft`). Bei `kontaktformular.herkunft_erfassen` = aus wird sie nicht übernommen, die Spalte `herkunft` bleibt `null`.
 
 ## GET `kontaktformular/file/{hash}/{name}/{id}`

@@ -9,11 +9,12 @@ Das Paket besteht aus einem Service Provider, einem Controller für Anfrage und 
 | Baustein | Aufgabe |
 |---|---|
 | `KontaktformularServiceProvider` | Registriert Routen, Views, Übersetzungen, Migrationen und Config. Hängt `HerkunftErfassen` in die Gruppe `web` direkt nach `StartSession` (siehe [decisions/0002](decisions/0002-middleware-registrierung-web.md)), nur wenn `kontaktformular.herkunft_erfassen` an ist. Bei aus wird am Router, in der Priorität und am Kernel nichts ergänzt. |
-| `Controllers/KontaktformularController` | `anfrage()`: Spam-Prüfung, Validierung, Speichern, Herkunft aus der Session, Mail-Versand. Die Session-Herkunft wird nur übernommen, wenn `kontaktformular.herkunft_erfassen` an ist; der Wert wird pro Anfrage gelesen. `file_download()`: Anhang-Download mit Hash- und Namensprüfung. |
+| `Controllers/KontaktformularController` | `anfrage()`: Spam-Prüfung, Validierung, Speichern, Herkunft aus der Session, Mail-Versand nach dem Speichern. Scheitert der Versand, wird die Ausnahme gemeldet und der Besucher leitet trotzdem auf `danke_formular`. Die Session-Herkunft wird nur übernommen, wenn `kontaktformular.herkunft_erfassen` an ist; der Wert wird pro Anfrage gelesen. `file_download()`: Anhang-Download mit Hash- und Namensprüfung. |
 | `Middleware/HerkunftErfassen` | Merkt sich beim ersten Request einer Session die Herkunft (First Touch) im Session-Key `kontaktformular_herkunft`. Läuft nur, wenn der Schalter an ist. |
 | `ValueObjects/Herkunft` | Unveränderliches Objekt für die erfassten Werte. Liefert den Kanal (`kanal()`) und die erste Klick-ID (`klickId()`). |
 | `ValueObjects/SiteAdresse` | Entfernt `gclid`, `gbraid` und `wbraid` aus der übermittelten Seitenadresse (`site`). |
 | `Enums/HerkunftKanal` | Fachliche Kanäle: `google_ads`, `organisch/sonstige`, `direkt`. |
+| `Exceptions/AnfrageMailNichtVersendet` | Ausnahme für einen Versandfehler nach dem Speichern. Erzeugt mit `fuer($anfrage, $ursache)`; die Ursache ist `previous`. `context()` liefert nur `id` und `nummer` der Anfrage. |
 | `Models/Kontaktformular` | Eloquent-Model der Tabelle `kontaktformular`. Die Spalte `herkunft` wird als Array gecastet. |
 | `Mail/Anfrage` | Mailable an `mailTo`. Setzt BCC aus `mailBcc` und die vier Herkunftszeilen. |
 
@@ -24,6 +25,7 @@ Das Paket besteht aus einem Service Provider, einem Controller für Anfrage und 
 3. `POST anfrage`: Der Controller liest das Array aus der Session, normalisiert es über `Herkunft::fromArray()` und speichert es in der Spalte `herkunft`. Fehlt eine Herkunft, bleibt die Spalte `null`. Bei abgeschaltetem Schalter liest der Controller die Session nicht, die Spalte bleibt `null`, auch wenn in der Session noch ein Eintrag aus der Zeit vor dem Abschalten liegt.
 4. Die Seitenadresse aus dem Formularfeld `site` wird über `SiteAdresse::aus()->ohneKlickIds()` bereinigt und in der Spalte `url` gespeichert.
 5. `Mail/Anfrage` liest `herkunft` aus dem Model und erzeugt daraus die Zeilen `Herkunft`, `Einstieg`, `Referrer` und `Klick-ID`. Die Zeilen stehen in HTML- und Text-Mail direkt nach `Site:`.
+6. Der Versand (`Mail::to(mailTo)->send(...)`) läuft synchron nach dem Speichern. Wirft er eine Ausnahme (z. B. SMTP-Fehler, ungültige `mailBcc`-Adresse), fängt der Controller sie ab und meldet `AnfrageMailNichtVersendet` per `report()` mit id und nummer der Anfrage. Die Anfrage ist dann bereits in der Tabelle und im Anhang-Speicher; der Besucher wird nicht erneut zum Absenden aufgefordert. Fehler vor dem Speichern (Spam-Prüfung, Validierung) und Fehler beim Speichern selbst werden nicht abgefangen.
 
 Die Begründung für die serverseitige Speicherung in der Session und den Verzicht auf Cookies steht in [decisions/0001](decisions/0001-herkunft-serverseitig-in-session.md).
 
