@@ -8,10 +8,10 @@ Branch: `fix/herkunft-schalter` (Paket kontaktformular, von `main`) · Spec: `sp
 - [x] T2 (AK1–AK7) [pro] Config `herkunft_erfassen` (Cast in `src/Config/config.php`), `KontaktformularServiceProvider` hängt `HerkunftErfassen` nur bei an ein, `KontaktformularController` liest die Session-Herkunft nur bei an; README — Tests: `tests/Feature/HerkunftSchalterTest.php`
 - [x] T3 NACHWEIS (Moderator)
 - [x] T4 REVIEW (reviewer, Review-Platz) → `pruefung.md` — zweimal nicht freigegeben (Router-Gruppe, dann Router-Priorität ungetestet)
-- [ ] T1c (AK2, AK6) test-writer: Testpaar mit HTTP-Kernel vor dem Boot (`#[DefineEnvironment]`, wie `public/index.php`), Router-Priorität bei aus ohne, bei an mit `HerkunftErfassen`, Gegenprobe `StartSession` in `$router->middlewarePriority`; Rot-Nachweis per Mutante B (nur Router-Priorität vor dem Schalter) — Tests: `tests/Feature/HerkunftSchalterTest.php`
+- [x] T1c (AK2, AK6) test-writer (1f0a489; Original 2/2 grün, Mutante B → Aus-Test rot „array does not contain …HerkunftErfassen“, Mutante C → An-Test rot; grünbar 37/37): Testpaar mit HTTP-Kernel vor dem Boot (`#[DefineEnvironment]`, wie `public/index.php`), Router-Priorität bei aus ohne, bei an mit `HerkunftErfassen`, Gegenprobe `StartSession` in `$router->middlewarePriority`; Rot-Nachweis per Mutante B (nur Router-Priorität vor dem Schalter) — Tests: `tests/Feature/HerkunftSchalterTest.php`
 - [ ] T5 Nachprüfung (reviewer, Review-Platz, `NACHPRUEFUNG: d02e9f6`)
 
 Bestehende Tests: `tests/Feature/HerkunftSchalterTest.php`, `tests/Feature/AnfrageHerkunftTest.php`
 
 ## Stand
-Nachtschicht 2026-11-02: main eingemergt (0b6497a, Host 8fab73a). Weiter: T1c test-writer (Lösungsweg aus der Nachprüfung, Produktivcode bleibt), danach T5.
+T1c erledigt (1f0a489), NACHWEIS Moderator: HerkunftSchalterTest + AnfrageHerkunftTest 547 grün, nur Testdatei geändert, Produktivcode unverändert. Weiter: T5 Nachprüfung (`NACHPRUEFUNG: d02e9f6`).
