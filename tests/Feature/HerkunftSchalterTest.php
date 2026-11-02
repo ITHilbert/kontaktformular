@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Schema;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Middleware\HerkunftErfassen;
 use ITHilbert\Kontaktformular\Tests\TestCase;
+use Orchestra\Testbench\Attributes\DefineEnvironment;
 use Orchestra\Testbench\Attributes\WithEnv;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -349,6 +350,42 @@ final class HerkunftSchalterTest extends TestCase
         $this->assertNotContains(HerkunftErfassen::class, $this->app->make(Router::class)->middlewarePriority);
         $this->assertNotContains(HerkunftErfassen::class, $kernel->getMiddlewareGroups()['web']);
         $this->assertNotContains(HerkunftErfassen::class, $kernel->getMiddlewarePriority());
+    }
+
+    /**
+     * Wie public/index.php: der HTTP-Kernel wird vor dem Boot der Provider aufgelöst
+     * und befüllt Gruppen und Priorität des Routers.
+     */
+    protected function kernelVorDemBoot($app): void
+    {
+        $app->make(HttpKernelContract::class);
+    }
+
+    // AK2 — Router-Priorität bei vor dem Boot aufgelöstem Kernel (Produktion)
+    #[WithEnv(self::ENV, 'off')]
+    #[DefineEnvironment('kernelVorDemBoot')]
+    public function test_aus_router_prioritaet_und_gruppe_ohne_middleware_bei_kernel_vor_dem_boot(): void
+    {
+        $this->assertSame(false, config('kontaktformular.herkunft_erfassen'));
+        $router = $this->app->make(Router::class);
+        // Gegenprobe: Priorität und Gruppe sind befüllt (Kernel wurde vor dem Boot aufgelöst)
+        $this->assertContains(StartSession::class, $router->middlewarePriority);
+        $this->assertContains(StartSession::class, $this->webGruppeRouter());
+
+        $this->assertNotContains(HerkunftErfassen::class, $router->middlewarePriority);
+        $this->assertNotContains(HerkunftErfassen::class, $this->webGruppeRouter());
+    }
+
+    // AK6 — Gegenstück: an (Standard), Kernel vor dem Boot
+    #[DefineEnvironment('kernelVorDemBoot')]
+    public function test_an_router_prioritaet_und_gruppe_mit_middleware_bei_kernel_vor_dem_boot(): void
+    {
+        $this->assertSame(true, config('kontaktformular.herkunft_erfassen'));
+        $router = $this->app->make(Router::class);
+        $this->assertContains(StartSession::class, $router->middlewarePriority);
+
+        $this->assertContains(HerkunftErfassen::class, $router->middlewarePriority);
+        $this->assertContains(HerkunftErfassen::class, $this->webGruppeRouter());
     }
 
     // AK2 — Router direkt nach dem Boot (wie public/index.php: Kernel noch nicht aufgelöst)
