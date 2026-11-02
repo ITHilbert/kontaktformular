@@ -8,9 +8,9 @@ Das Paket besteht aus einem Service Provider, einem Controller für Anfrage und 
 
 | Baustein | Aufgabe |
 |---|---|
-| `KontaktformularServiceProvider` | Registriert Routen, Views, Übersetzungen, Migrationen und Config. Hängt `HerkunftErfassen` in die Gruppe `web` direkt nach `StartSession` (siehe [decisions/0002](decisions/0002-middleware-registrierung-web.md)). |
-| `Controllers/KontaktformularController` | `anfrage()`: Spam-Prüfung, Validierung, Speichern, Herkunft aus der Session, Mail-Versand. `file_download()`: Anhang-Download mit Hash- und Namensprüfung. |
-| `Middleware/HerkunftErfassen` | Merkt sich beim ersten Request einer Session die Herkunft (First Touch) im Session-Key `kontaktformular_herkunft`. |
+| `KontaktformularServiceProvider` | Registriert Routen, Views, Übersetzungen, Migrationen und Config. Hängt `HerkunftErfassen` in die Gruppe `web` direkt nach `StartSession` (siehe [decisions/0002](decisions/0002-middleware-registrierung-web.md)), nur wenn `kontaktformular.herkunft_erfassen` an ist. Bei aus wird am Router, in der Priorität und am Kernel nichts ergänzt. |
+| `Controllers/KontaktformularController` | `anfrage()`: Spam-Prüfung, Validierung, Speichern, Herkunft aus der Session, Mail-Versand. Die Session-Herkunft wird nur übernommen, wenn `kontaktformular.herkunft_erfassen` an ist; der Wert wird pro Anfrage gelesen. `file_download()`: Anhang-Download mit Hash- und Namensprüfung. |
+| `Middleware/HerkunftErfassen` | Merkt sich beim ersten Request einer Session die Herkunft (First Touch) im Session-Key `kontaktformular_herkunft`. Läuft nur, wenn der Schalter an ist. |
 | `ValueObjects/Herkunft` | Unveränderliches Objekt für die erfassten Werte. Liefert den Kanal (`kanal()`) und die erste Klick-ID (`klickId()`). |
 | `ValueObjects/SiteAdresse` | Entfernt `gclid`, `gbraid` und `wbraid` aus der übermittelten Seitenadresse (`site`). |
 | `Enums/HerkunftKanal` | Fachliche Kanäle: `google_ads`, `organisch/sonstige`, `direkt`. |
@@ -19,9 +19,9 @@ Das Paket besteht aus einem Service Provider, einem Controller für Anfrage und 
 
 ## Datenfluss Herkunft
 
-1. Erster Request einer Session (z. B. `/?gclid=…`): `HerkunftErfassen` läuft direkt nach `StartSession`. Sie liest Query-Parameter, Pfad und Referrer-Host und legt das Ergebnis als Array in der Session unter `kontaktformular_herkunft` ab.
+1. Erster Request einer Session (z. B. `/?gclid=…`): `HerkunftErfassen` läuft direkt nach `StartSession`. Sie liest Query-Parameter, Pfad und Referrer-Host und legt das Ergebnis als Array in der Session unter `kontaktformular_herkunft` ab. Bei abgeschaltetem Schalter läuft sie nicht, die Session bleibt ohne Eintrag.
 2. Weitere Requests derselben Session ändern diesen Wert nicht (First Touch). Beim Session-Treiber `cookie` wird nichts erfasst.
-3. `POST anfrage`: Der Controller liest das Array aus der Session, normalisiert es über `Herkunft::fromArray()` und speichert es in der Spalte `herkunft`. Fehlt eine Herkunft, bleibt die Spalte `null`.
+3. `POST anfrage`: Der Controller liest das Array aus der Session, normalisiert es über `Herkunft::fromArray()` und speichert es in der Spalte `herkunft`. Fehlt eine Herkunft, bleibt die Spalte `null`. Bei abgeschaltetem Schalter liest der Controller die Session nicht, die Spalte bleibt `null`, auch wenn in der Session noch ein Eintrag aus der Zeit vor dem Abschalten liegt.
 4. Die Seitenadresse aus dem Formularfeld `site` wird über `SiteAdresse::aus()->ohneKlickIds()` bereinigt und in der Spalte `url` gespeichert.
 5. `Mail/Anfrage` liest `herkunft` aus dem Model und erzeugt daraus die Zeilen `Herkunft`, `Einstieg`, `Referrer` und `Klick-ID`. Die Zeilen stehen in HTML- und Text-Mail direkt nach `Site:`.
 

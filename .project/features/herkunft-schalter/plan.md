@@ -9,9 +9,9 @@ Branch: `fix/herkunft-schalter` (Paket kontaktformular, von `main`) · Spec: `sp
 - [x] T3 NACHWEIS (Moderator)
 - [x] T4 REVIEW (reviewer, Review-Platz) → `pruefung.md` — zweimal nicht freigegeben (Router-Gruppe, dann Router-Priorität ungetestet)
 - [x] T1c (AK2, AK6) test-writer (1f0a489; Original 2/2 grün, Mutante B → Aus-Test rot „array does not contain …HerkunftErfassen“, Mutante C → An-Test rot; grünbar 37/37): Testpaar mit HTTP-Kernel vor dem Boot (`#[DefineEnvironment]`, wie `public/index.php`), Router-Priorität bei aus ohne, bei an mit `HerkunftErfassen`, Gegenprobe `StartSession` in `$router->middlewarePriority`; Rot-Nachweis per Mutante B (nur Router-Priorität vor dem Schalter) — Tests: `tests/Feature/HerkunftSchalterTest.php`
-- [ ] T5 Nachprüfung (reviewer, Review-Platz, `NACHPRUEFUNG: d02e9f6`)
+- [x] T5 Nachprüfung — freigegeben 2026-11-02 (reviewer, Review-Platz, `NACHPRUEFUNG: d02e9f6`)
 
 Bestehende Tests: `tests/Feature/HerkunftSchalterTest.php`, `tests/Feature/AnfrageHerkunftTest.php`
 
 ## Stand
-T1c erledigt (1f0a489), NACHWEIS Moderator: HerkunftSchalterTest + AnfrageHerkunftTest 547 grün, nur Testdatei geändert, Produktivcode unverändert. Weiter: T5 Nachprüfung (`NACHPRUEFUNG: d02e9f6`).
+Fertig: Nachprüfung freigegeben, Doku und Entscheidung 0003, gemergt in main (Nachtschicht 2026-11-02).

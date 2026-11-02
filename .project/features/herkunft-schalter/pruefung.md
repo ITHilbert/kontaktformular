@@ -104,3 +104,45 @@ Die Kernfrage ist erfüllt. Der neue Test belegt den Router-Zweig direkt nach de
 Nicht freigegeben, weil die zweite Router-Aussage aus AK2 („noch in der Middleware-Priorität“, Router-Seite) weiter nur scheinbar getestet ist. Die neue `assertNotContains` auf `$router->middlewarePriority` prüft in Testbench eine leere Liste und bleibt grün, wenn nur die Router-Priorität aus dem Schalter fällt (Mutante B). In Produktion stünde die Middleware dann in der Router-Priorität (nachgestellt mit `prod.php`). Die erste Prüfung hatte die Router-Priorität ausdrücklich in die Begründung aufgenommen. Das heutige Verhalten ist korrekt, und eine Middleware in der Priorität ohne Gruppeneintrag wirkt nicht. Es fehlt also nur ein Test, kein Fix.
 
 Nötig (test-writer, Produktivcode bleibt): Ein Testpaar mit `#[DefineEnvironment]`, das den HTTP-Kernel vor dem Boot auflöst wie `public/index.php`. Gegenprobe im Test: `in_array(StartSession::class, $router->middlewarePriority)`, sonst ist die Prüfung wieder leer. Bei aus darf `HerkunftErfassen` in der Router-Priorität nicht stehen, bei an muss sie dort stehen. Die Sonde `/tmp/claude-1000/-home-joerg-projekte-packages-dev/e400a5d4-2284-415e-bf05-a955f4785230/scratchpad/mutant110/SondeKernelVorBootTest.php` zeigt den Aufbau: im Original grün, bei Mutante B rot. Alternativ die leere Prüfung in 06bb424 durch diesen Aufbau ersetzen.
+
+---
+
+# Nachprüfung: herkunft-schalter (kontaktformular, Dashboard #110) — 2026-11-02 (Nachprüfung seit d02e9f6)
+
+Geprüft im Review-Platz `/home/joerg/projekte/.worktrees/packages_dev/reviewer`, Host `fix/herkunft-schalter-2` (27f8bc9, Submodul auf 5d781ba), Paket kontaktformular `fix/herkunft-schalter` (5d781ba). Die Spec, `src/` und README sind seit d02e9f6 unverändert (`git diff d02e9f6..HEAD` leer für diese Pfade). Der Fix besteht nur aus Tests: 1f0a489 fügt in `tests/Feature/HerkunftSchalterTest.php` 37 Zeilen hinzu (Hook `kernelVorDemBoot` und ein Testpaar), dazu kommt `plan.md`. Die Merges 0b6497a und 5bfb011 bringen gegenüber d02e9f6 keine Änderung am Baum des Pakets. Host gegen `main`: nur der Submodul-Stand. Deshalb gibt es kein volles Review.
+
+Mutanten-Methode wie in der letzten Prüfung, neu aufgebaut, weil der alte Scratchpad weg ist: Mutierte Kopien von `KontaktformularServiceProvider` liegen unter `/tmp/claude-1000/-home-joerg-projekte-packages-dev/d6b2a5bd-c88c-4581-abf7-b18f80f2cef3/scratchpad/mutant110/`. Ein vorangestellter Autoloader in `bootstrap.php` lädt sie. Aufruf: `MUTANTE=<x> php vendor/bin/phpunit -c phpunit.xml --bootstrap …/mutant110/bootstrap.php packages/kontaktformular/tests/Feature/HerkunftSchalterTest.php`. Der Platz bleibt dabei unverändert.
+- **A:** Der ganze Router-Zweig (Gruppe und Priorität) steht vor dem Schalter.
+- **B:** Nur die Router-Priorität steht vor dem Schalter.
+- **C:** Die Router-Gruppe wird nicht ergänzt.
+- **D:** Nur die Router-Gruppe steht vor dem Schalter.
+- **E:** Die Router-Priorität wird nicht ergänzt.
+
+| AK / Aussage (Zitat) | Ergebnis | Nachweis |
+|---|---|---|
+| AK2 „noch in der Middleware-Priorität“ (Router-Priorität) | bestanden, jetzt durch einen Test abgesichert | Neuer Test `test_aus_router_prioritaet_und_gruppe_ohne_middleware_bei_kernel_vor_dem_boot` grün. `#[DefineEnvironment('kernelVorDemBoot')]` löst den HTTP-Kernel vor dem Boot auf, wie `public/index.php`. Gegenprobe im selben Test: `StartSession` steht in `$router->middlewarePriority` und in der Router-Gruppe `web`, die Prüfung läuft also nicht mehr gegen eine leere Liste. Dazu `config(...) === false`. **Mutante B** (nur Router-Priorität vor dem Schalter, die Lücke aus d02e9f6): genau dieser Test wird rot mit „Failed asserting that an array does not contain '…HerkunftErfassen'“, 36 weitere grün. Bei Mutante A wird er ebenfalls rot. Ohne Mutante: 37/37 grün (248 Assertions) |
+| AK2 „Dann steht `HerkunftErfassen` weder in der Router-Gruppe `web`“ | bestanden, zweifach abgesichert | Bestehend: `test_aus_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware_nicht` (Prüfung d02e9f6). Neu: Der Test oben prüft die Router-Gruppe auch bei vor dem Boot aufgelöstem Kernel. **Mutante D** (nur Router-Gruppe vor dem Schalter): beide Tests rot. Mutante A: beide rot |
+| AK2 „Wenn die App bootet und der HTTP-Kernel (auch erst später) aufgelöst wird“ | bestanden | Später aufgelöster Kernel: bestehende Tests (Prüfung c27d59d). Kernel vor dem Boot (Produktion): jetzt per Test abgesichert, für Router-Gruppe und Router-Priorität (siehe oben) |
+| AK2 „noch in der Kernel-Gruppe `web`“, „noch in der Middleware-Priorität“ (Kernel-Priorität) | bestanden (Prüfung c27d59d) | Diese Tests hat der Fix nicht berührt, sie sind weiter grün |
+| AK6 „Dann ist `HerkunftErfassen` eingehängt“ | bestanden | Neues Gegenstück `test_an_router_prioritaet_und_gruppe_mit_middleware_bei_kernel_vor_dem_boot` grün (Standard, Gegenprobe `StartSession` in der Priorität). **Mutante E** (Router-Priorität nicht ergänzt): genau dieser Test wird rot („Failed asserting that an array contains '…HerkunftErfassen'“). **Mutante C** (Router-Gruppe nicht ergänzt): dieser Test und `test_an_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware` werden rot |
+| AK6 „und das Verhalten entspricht `anfrage-herkunft` AK1–AK9; deren Tests bleiben grün“ | bestanden | `AnfrageHerkunftTest.php` 510/510 grün. Die Datei ist im Fix nicht verändert |
+| AK3 „Dann enthält die Session keinen Herkunfts-Eintrag (`HerkunftErfassen::SESSION_KEY`)“ | bestanden (Prüfung c27d59d) | Produktivcode unverändert. Die Ursache auf dem Produktionsweg (Router-Gruppe und Router-Priorität bei vor dem Boot aufgelöstem Kernel) ist jetzt per Test abgesichert |
+| Alle übrigen Aussagen (AK1, AK3 Spalte/Mail, AK4, AK5, AK7, Randfälle leer/Laufzeit/Controller, Nicht-Ziele, Entscheidungsspielraum) | bestanden / eingehalten (Prüfung d02e9f6) | Spec, Produktivcode und README sind seit d02e9f6 unverändert, betroffene Tests sind weiter grün |
+
+Anmerkung, kein Mangel: Die Zeile `assertNotContains(HerkunftErfassen::class, $router->middlewarePriority)` in `test_aus_router_direkt_nach_dem_boot_ohne_kernel_enthaelt_die_middleware_nicht` (06bb424) prüft in Testbench weiter eine leere Liste. Die Aussage deckt jetzt aber der neue Test ab, und Mutante B macht ihn rot.
+
+## Sicherheit (Nachprüfung)
+- Der Fix ändert nur Tests und `plan.md`. Produktivcode ist nicht betroffen, also gibt es keine neue Angriffsfläche.
+
+## Regressionen (Nachprüfung)
+- Der Fix ändert keinen Produktivcode. Nach den Regeln reichen deshalb die Tests des Features und der berührten Dateien, die ganze Suite läuft im Schlusstest.
+- `HerkunftSchalterTest.php`: 37/37 grün (248 Assertions).
+- `AnfrageHerkunftTest.php`: 510/510 grün.
+- Testsuite `Kontaktformular` seriell: 656/656 grün (8914 Assertions).
+- Pint `--test` auf `HerkunftSchalterTest.php`: bestanden.
+- Kein Echtlauf nötig, Laufzeitverhalten unverändert. Die Mutanten liefen nur in Testprozessen, die Entwicklungs-DB wurde nicht berührt.
+
+## Neue Tasks: keine
+
+## Fazit: freigegeben
+Die offene Lücke aus d02e9f6 ist geschlossen. Das neue Testpaar löst den Kernel vor dem Boot auf, wie es in Produktion passiert. Seine Gegenprobe (`StartSession` in der Router-Priorität) zeigt, dass die Prüfung nicht ins Leere läuft. Es wird rot, sobald die Router-Priorität (Mutante B) oder die Router-Gruppe (Mutante D) aus dem Schalter fällt. Sein Gegenstück wird rot, sobald eins von beiden bei an fehlt (Mutanten C, E). Alle übrigen Aussagen sind übernommen, weil Spec, Produktivcode und README seit d02e9f6 unverändert sind.
