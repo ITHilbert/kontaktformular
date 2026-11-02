@@ -1,4 +1,5 @@
 ## In Arbeit
+- [mailversand](mailversand/spec.md) — #316 Versandfehler nach gespeicherter Anfrage: Danke-Seite statt 500, Fehler gemeldet
 - [anhaenge-disk](anhaenge-disk/spec.md) — Anhänge über die Storage-Disk, Löschung eingeplant (Dashboard #119)
 - [csrf-token](csrf-token/spec.md) — #120 CSRF-Token vor dem Absenden auffrischen (Token-Route, Vue-Komponente)
 
