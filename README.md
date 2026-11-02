@@ -72,6 +72,15 @@ Erfasst wird nur beim **ersten Request einer Session** (First Touch); spätere R
 - Steuerzeichen (U+0000–U+001F, U+007F, U+0080–U+009F) sowie die Zeilentrenner U+2028 und U+2029 werden aus allen erfassten Werten und aus `site` entfernt. So entstehen keine zusätzlichen Zeilen im Mail-Text.
 - Als Klick-ID zählt jeder Parametername, den PHP als `gclid`, `gbraid` oder `wbraid` liest, z. B. `gcl%69d=…` oder `+gclid=…`.
 
+### Herkunftserfassung abschalten
+
+Config `kontaktformular.herkunft_erfassen` (env `KONTAKTFORMULAR_HERKUNFT_ERFASSEN`), Standard **an**. Zum Abschalten (z. B. aus Datenschutzgründen) `KONTAKTFORMULAR_HERKUNFT_ERFASSEN=false` setzen; ebenso aus sind `0`, `off`, `no` und ein leerer Wert. `true`, `1`, `on`, `yes` oder nicht gesetzt = an.
+
+- Aus: Die Middleware `HerkunftErfassen` wird nicht eingehängt, es wird keine Herkunft in der Session gemerkt, und eine bereits vorhandene Session-Herkunft wird nicht übernommen. Die Spalte `herkunft` bleibt `null`.
+- Die Mail zeigt dann `Herkunft: direkt`, `Einstieg: -`, `Referrer: -` und `Klick-ID: -`.
+- Die Klick-IDs `gclid`, `gbraid` und `wbraid` werden aus `site` weiterhin entfernt.
+- Maßgeblich ist der Wert beim Start der App; eine Änderung per `config([...])` zur Laufzeit wird für die Middleware nicht unterstützt.
+
 ### Spalte `herkunft`
 
 Die Migration des Pakets legt die nullable JSON-Spalte `herkunft` in `kontaktformular` an (`php artisan migrate`). Sie enthält die erfassten Werte, z. B. `{"gclid":"…","utm_source":"google","einstieg":"/excel-programmierer","referrer":"google.com"}`. Ohne gespeicherte Herkunft bleibt sie `null`; bestehende Anfragen werden nicht nachbefüllt.

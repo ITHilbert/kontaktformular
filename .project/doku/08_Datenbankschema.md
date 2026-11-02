@@ -28,3 +28,4 @@ Tabelle `kontaktformular`. Angelegt durch `2023_08_15_143636_create_kontaktformu
 - `nummer` wird per `max + 1` ermittelt und nicht über eine Datenbanksequenz. Parallele Anfragen können dieselbe Nummer erhalten.
 - `url` ist `string` (Standard 255 Zeichen), die Validierung von `site` erlaubt aber bis 2048 Zeichen. Längere Adressen führen bei striktem SQL-Modus zu einem Fehler beim Speichern.
 - `herkunft` wird nicht nachträglich für bestehende Anfragen befüllt.
+- `herkunft` bleibt `null`, solange `kontaktformular.herkunft_erfassen` aus ist (auch bei einer Session mit Eintrag aus der Zeit davor).

@@ -1,6 +1,6 @@
 # Kontext: ITHilbert Kontaktformular
 
-Paket `ithilbert/kontaktformular` (Namespace `ITHilbert\Kontaktformular`). Stellt ein Kontaktformular mit Spam-Schutz, optionalem Datei-Upload und Mail-Versand bereit. Anfragen werden in der Tabelle `kontaktformular` gespeichert. Die Herkunft einer Anfrage (Google Ads, UTM, Einstiegsseite, Referrer) wird pro Session beim ersten Request erfasst.
+Paket `ithilbert/kontaktformular` (Namespace `ITHilbert\Kontaktformular`). Stellt ein Kontaktformular mit Spam-Schutz, optionalem Datei-Upload und Mail-Versand bereit. Anfragen werden in der Tabelle `kontaktformular` gespeichert. Die Herkunft einer Anfrage (Google Ads, UTM, Einstiegsseite, Referrer) wird pro Session beim ersten Request erfasst. Die Erfassung ist per Config abschaltbar (Abschnitt [Herkunftserfassung abschalten](../../README.md#herkunftserfassung-abschalten)).
 
 ## Startpunkt
 
