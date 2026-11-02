@@ -35,6 +35,8 @@ return [
 ];
 ```
 
+Schlägt der Mailversand an `mailTo`/`mailBcc` fehl (z. B. SMTP-Fehler, ungültige BCC-Adresse), hält das den Besucher nicht auf: Er sieht die Danke-Seite, der Fehler wird gemeldet (Log, mit id und Nummer der Anfrage) und die Anfrage bleibt gespeichert.
+
 ### Kopie an das Lead-Postfach (`mailBcc`)
 
 `mailBcc` (env `KONTAKTFORMULAR_MAIL_BCC`) schickt jede Anfrage zusätzlich als BCC-Kopie an ein Lead-Postfach, z. B. `marketing@it-entwickler-hilbert.de` für die Marketing-Auswertung. `mailTo`, Absender, Betreff und Inhalt bleiben unverändert.
