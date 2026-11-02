@@ -11,12 +11,14 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Mail;
 use ITHilbert\Kontaktformular\Anhangablage;
+use ITHilbert\Kontaktformular\Exceptions\AnfrageMailNichtVersendet;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Middleware\HerkunftErfassen;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
 use ITHilbert\Kontaktformular\ValueObjects\Herkunft;
 use ITHilbert\Kontaktformular\ValueObjects\SiteAdresse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 final class KontaktformularController extends Controller
 {
@@ -60,7 +62,12 @@ final class KontaktformularController extends Controller
 
         $kontakt->save();
 
-        Mail::to(config('kontaktformular.mailTo'))->send(new Anfrage($kontakt));
+        try {
+            Mail::to(config('kontaktformular.mailTo'))->send(new Anfrage($kontakt));
+        } catch (Throwable $e) {
+            // Die Anfrage ist gespeichert; der Besucher soll sie nicht erneut absenden müssen.
+            report(AnfrageMailNichtVersendet::fuer($kontakt, $e));
+        }
 
         return redirect()->route('danke_formular');
     }
