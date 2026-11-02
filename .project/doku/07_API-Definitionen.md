@@ -29,7 +29,7 @@ Verhalten:
 - Honeypot oder Nachricht unter der Mindestlänge: Redirect auf `danke_bot_formular`, nichts wird gespeichert oder versendet.
 - Validierungsfehler: Standard-Redirect von Laravel mit Fehlermeldungen.
 - Erfolg: Anfrage wird gespeichert, Mail an `mailTo` versendet, Redirect auf `danke_formular`.
-- Die Herkunft kommt nicht aus dem Request, sondern aus der Session (Key `kontaktformular_herkunft`).
+- Die Herkunft kommt nicht aus dem Request, sondern aus der Session (Key `kontaktformular_herkunft`). Bei `kontaktformular.herkunft_erfassen` = aus wird sie nicht übernommen, die Spalte `herkunft` bleibt `null`.
 
 ## GET `kontaktformular/file/{hash}/{name}/{id}`
 

@@ -70,6 +70,10 @@ class KontaktformularServiceProvider extends ServiceProvider
      */
     private function registriereHerkunftMiddleware(): void
     {
+        if (! config('kontaktformular.herkunft_erfassen')) {
+            return;
+        }
+
         $router = $this->app->make(Router::class);
         $router->middlewareGroup('web', self::gruppeMitHerkunft($router->getMiddlewareGroups()['web'] ?? []));
         $router->middlewarePriority = self::prioritaetMitHerkunft($router->middlewarePriority);

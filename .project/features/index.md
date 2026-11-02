@@ -19,6 +19,7 @@
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
+- [herkunft-schalter](herkunft-schalter/spec.md) — #110 Herkunftserfassung per Config abschaltbar (`herkunft_erfassen`) (2026-11-02)
 - [danke-seiten-robots](danke-seiten-robots/plan.md) — Danke-Seiten bringen ihr Robots-Meta selbst mit, keine Host-View `header.robots_disallow` mehr nötig (2026-10-27)
 - [anfrage-herkunft](anfrage-herkunft/plan.md) — Herkunft (gclid/UTM, Einstieg, Referrer) serverseitig in der Session, Spalte `herkunft`, Zeilen in der Anfrage-Mail (Dashboard #85) (2026-10-26)
 - [anfrage-bcc](anfrage-bcc/plan.md) — Kopie jeder Anfrage per BCC an das Lead-Postfach (Dashboard #84) (2026-10-26)

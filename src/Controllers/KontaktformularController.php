@@ -119,6 +119,10 @@ final class KontaktformularController extends Controller
      */
     private function herkunftAusSession(Request $request): ?array
     {
+        if (! config('kontaktformular.herkunft_erfassen')) {
+            return null;
+        }
+
         $daten = $request->hasSession() ? $request->session()->get(HerkunftErfassen::SESSION_KEY) : null;
         if (! is_array($daten)) {
             return null;

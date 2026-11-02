@@ -16,6 +16,9 @@ return [
     // Anfragen samt Anhang werden nach dieser Zahl Tage gelöscht; null = Anfragen nie löschen.
     'anfragen_loeschen_nach_tagen' => env('KONTAKTFORMULAR_ANFRAGEN_LOESCHEN_NACH_TAGEN'),
 
+    // Herkunft (UTM, Klick-ID, Referrer) erfassen und mit der Anfrage speichern.
+    // Aus bei false, 0, off, no oder leerem Wert; sonst an (Standard).
+    'herkunft_erfassen' => filter_var(env('KONTAKTFORMULAR_HERKUNFT_ERFASSEN', true), FILTER_VALIDATE_BOOL),
     // Storage-Disk für Anhänge (Pfad `kontaktformular/<hash>.zip` auf der Disk). Nur Disks mit lokalem Pfad.
     'disk' => env('KONTAKTFORMULAR_DISK', 'local'),
     // Löschen alter Anhänge täglich im Scheduler einplanen.
