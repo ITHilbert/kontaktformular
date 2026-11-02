@@ -9,9 +9,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use ITHilbert\Kontaktformular\Anhangablage;
+use ITHilbert\Kontaktformular\Exceptions\AnfrageMailNichtVersendet;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Middleware\HerkunftErfassen;
 use ITHilbert\Kontaktformular\Models\Kontaktformular;
@@ -66,12 +66,7 @@ final class KontaktformularController extends Controller
             Mail::to(config('kontaktformular.mailTo'))->send(new Anfrage($kontakt));
         } catch (Throwable $e) {
             // Die Anfrage ist gespeichert; der Besucher soll sie nicht erneut absenden müssen.
-            report($e);
-            Log::error('Kontaktformular: Anfrage-Mail nicht versendet: '.$e->getMessage(), [
-                'id' => $kontakt->id,
-                'nummer' => $kontakt->nummer,
-                'exception' => $e,
-            ]);
+            report(AnfrageMailNichtVersendet::fuer($kontakt, $e));
         }
 
         return redirect()->route('danke_formular');
