@@ -33,7 +33,7 @@ Anlass: Dashboard-Task #85 (Projekt kontaktformular), Bezug #84 (`anfrage-bcc`).
 3. Der Referrer hat denselben Host wie der Request (interne Navigation, abgelaufene Session) → gilt als kein Referrer.
 4. `Referer`-Header ohne gültigen Host (z. B. `android-app://…` ohne Host, Müll) → gilt als kein Referrer, kein Fehler.
 5. Ein Parameter ist ein Array (`?gclid[]=x`) oder leer → wird ignoriert. Längere Werte als 255 Zeichen werden auf 255 gekürzt.
-6. Der erste Request einer Session ist schon `POST /anfrage` → Herkunft wird aus diesem Request erfasst (Einstieg `/anfrage`) und mit der Anfrage gespeichert.
+6. Der erste Request einer Session ist schon `POST /anfrage` → keine Herkunft (AK10), Spalte `herkunft` bleibt `null`, die Anfrage wird gespeichert und verschickt. *Geändert 2026-11-03 (Nachtschicht, #366): bisher Erfassen mit Einstieg `/anfrage`.*
 7. Request ohne Session (Route außerhalb `web`, z. B. `api`) → die Middleware tut nichts, kein Fehler.
 8. Bestehende Datensätze → `herkunft` bleibt `null`, kein Nachbefüllen.
 9. Session-Treiber `cookie` (`session.driver`) → die Middleware speichert nichts, weil die Session-Daten dann im Browser lägen. Die Anfrage wird mit `herkunft = null` gespeichert, die Mail-Zeilen zeigen `direkt` bzw. `-`. *Ergänzt durch den Moderator am 2026-10-26 (DSGVO-konforme Wahl, ohne Rückfrage nach Rule `entscheidungsbefugnis.md`).*

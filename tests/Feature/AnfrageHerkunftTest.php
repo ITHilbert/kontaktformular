@@ -1031,14 +1031,13 @@ final class AnfrageHerkunftTest extends TestCase
         }
     }
 
-    // Randfall 6
-    public function test_erster_request_post_anfrage_erfasst_herkunft_aus_diesem_request(): void
+    // Randfall 6, abgelöst durch AK10 (#366): ein POST /anfrage als erster Request erfasst keine Herkunft
+    public function test_erster_request_post_anfrage_erfasst_keine_herkunft_ak10(): void
     {
         $mail = $this->sendeAnfrage(['Referer' => 'https://google.com/'], '?gclid=ERSTER-POST');
 
-        $this->assertHerkunftZeilen($mail, 'google_ads', '/anfrage', 'google.com', 'gclid');
-        $this->assertContains('ERSTER-POST', $this->herkunftWerte());
-        $this->assertContains('/anfrage', $this->herkunftWerte());
+        $this->assertHerkunftZeilen($mail, 'direkt', '-', '-', '-');
+        $this->assertNull($this->herkunftRoh());
     }
 
     // Randfall 7
@@ -1054,8 +1053,8 @@ final class AnfrageHerkunftTest extends TestCase
 
         // Nichts davon ist in einer späteren Session gelandet
         $mail = $this->sendeAnfrage();
-        $this->assertHerkunftZeilen($mail, 'direkt', '/anfrage', '-', '-');
-        $this->assertNotContains('API-GCLID', $this->herkunftWerte());
+        $this->assertHerkunftZeilen($mail, 'direkt', '-', '-', '-');
+        $this->assertNull($this->herkunftRoh(), 'API-Request hat Herkunft hinterlassen');
     }
 
     // Randfall 8
