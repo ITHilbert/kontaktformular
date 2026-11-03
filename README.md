@@ -56,7 +56,7 @@ Das Paket merkt sich, woher ein Besucher kam, und schickt diese Herkunft mit der
 
 ### Middleware
 
-Die Middleware `ITHilbert\Kontaktformular\Middleware\HerkunftErfassen` wird vom ServiceProvider **automatisch in die Middleware-Gruppe `web` eingehängt**, und zwar **direkt nach `StartSession`** (in der Gruppe und in der Middleware-Priorität). So wird die Herkunft auch erfasst, wenn CSRF-Prüfung, `auth` oder `throttle` den Request danach abbrechen. Middlewares, die andere Pakete in `web` einhängen (z. B. `userauth`), bleiben erhalten. Im Projekt ist nichts einzutragen. Routen außerhalb von `web` (z. B. `api`, ohne Session) bleiben unberührt.
+Die Middleware `ITHilbert\Kontaktformular\Middleware\HerkunftErfassen` wird vom ServiceProvider **automatisch in die Middleware-Gruppe `web` eingehängt**, und zwar **direkt nach `StartSession`** (in der Gruppe und in der Middleware-Priorität). So wird die Herkunft auch erfasst, wenn CSRF-Prüfung, `auth` oder `throttle` den Request danach abbrechen. Middlewares, die andere Pakete in `web` einhängen (z. B. `userauth`), bleiben erhalten. Im Projekt ist nichts einzutragen. Routen außerhalb von `web` (z. B. `api`, ohne Session) bleiben unberührt. Erfasst werden nur Seitenaufrufe: Requests mit einer anderen Methode als `GET`/`HEAD` (z. B. `POST /anfrage`), Requests, die JSON erwarten (`expectsJson()`), und der Token-Abruf `kontaktformular.csrf_token` setzen keine Herkunft; der nächste Seitenaufruf der Session wird als erster Kontakt erfasst.
 
 Erfasst wird nur beim **ersten Request einer Session** (First Touch); spätere Requests ändern die gespeicherten Werte nicht. Ist der erste Request schon `POST /anfrage`, zählt dieser.
 
