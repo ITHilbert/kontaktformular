@@ -31,6 +31,7 @@ final class HerkunftErfassen
 
     /**
      * Beim Treiber `cookie` lägen die Session-Daten im Browser – dann wird nichts gespeichert.
+     * Technische Requests (kein GET/HEAD, erwartet JSON, Token-Route) sind kein Einstieg (AK10).
      */
     private function darfErfassen(Request $request): bool
     {
@@ -38,10 +39,23 @@ final class HerkunftErfassen
             return false;
         }
 
+        if (! $this->istSeitenaufruf($request)) {
+            return false;
+        }
+
         $session = $request->session();
 
         return ! $session->getHandler() instanceof CookieSessionHandler
             && ! $session->has(self::SESSION_KEY);
+    }
+
+    private function istSeitenaufruf(Request $request): bool
+    {
+        if (! $request->isMethod('GET') && ! $request->isMethod('HEAD')) {
+            return false;
+        }
+
+        return ! $request->expectsJson() && ! $request->routeIs('kontaktformular.csrf_token');
     }
 
     private function herkunftAus(Request $request): Herkunft
