@@ -3,7 +3,7 @@
         <input type="hidden" name="_token" v-bind:value="csrf" ref="token" />
         <input type="hidden" name="site" v-bind:value="currentUrl" />
 
-        <input type="text" name="fax" class="n-bot" tabindex="-1" autocomplete="off">
+        <input type="text" name="fax" class="n-bot" tabindex="-1" autocomplete="off" aria-hidden="true">
         <label for="contact_name" class="font-weight-bold">Name *</label>
         <input type="text" class="form-control" id="contact_name" name="Name" placeholder="Namen eingeben" autocomplete="name" required /><br>
 
