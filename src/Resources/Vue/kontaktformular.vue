@@ -13,8 +13,13 @@
         <label for="contact_telefon" class="font-weight-bold">Telefonnummer</label>
         <input type="tel" class="form-control" id="contact_telefon" name="Telefon" placeholder="Telefonnummer eingeben (optional)" autocomplete="tel" /><br>
 
-        <label for="contact_nachricht" class="font-weight-bold">Ihre Nachricht *</label>
-        <textarea rows="4" class="form-control" name="Nachricht" id="contact_nachricht" placeholder="Hier Ihre Nachricht eingeben ..." autocomplete="off" required ></textarea><br>
+        <template v-if="feldWebsite">
+            <label for="contact_website" class="font-weight-bold">Adresse Ihrer Website</label>
+            <input type="text" inputmode="url" maxlength="2048" class="form-control" id="contact_website" name="Website" placeholder="Adresse Ihrer Website eingeben (optional)" autocomplete="url" /><br>
+        </template>
+
+        <label for="contact_nachricht" class="font-weight-bold">{{ nachrichtPflicht ? 'Ihre Nachricht *' : 'Ihre Nachricht (optional)' }}</label>
+        <textarea rows="4" class="form-control" name="Nachricht" id="contact_nachricht" placeholder="Hier Ihre Nachricht eingeben ..." autocomplete="off" v-bind:required="nachrichtPflicht"></textarea><br>
 
         <label for="contact_file_upload" class="font-weight-bold">Datei Anhängen (optional)<br>
         <input type="file" name="Datei" id="contact_file_upload" /></label><br>
@@ -35,6 +40,14 @@ import { erzeugeTokenAuffrischer } from './tokenAuffrischen.mjs';
 export default {
     props: {
         'route': '',
+        'feldWebsite': {
+            type: Boolean,
+            default: false,
+        },
+        'nachrichtPflicht': {
+            type: Boolean,
+            default: true,
+        },
         'tokenRoute': {
             type: String,
             default: '/kontaktformular/csrf-token',

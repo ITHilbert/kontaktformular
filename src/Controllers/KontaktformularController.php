@@ -28,26 +28,37 @@ final class KontaktformularController extends Controller
             return redirect()->route('danke_bot_formular');
         }
 
+        $nachrichtPflicht = (bool) (config('kontaktformular.nachricht_pflicht') ?? true);
+        $feldWebsite = (bool) config('kontaktformular.feld_website');
+
         $nachricht = trim((string) $request->input('Nachricht', ''));
-        if (strlen($nachricht) < 10 || strpos($nachricht, ' ') === false) {
+        if (($nachrichtPflicht || $nachricht !== '') && (strlen($nachricht) < 10 || strpos($nachricht, ' ') === false)) {
             return redirect()->route('danke_bot_formular');
         }
 
-        $validated = $request->validate([
+        $regeln = [
             'Name' => 'required|string|max:255',
             'Email' => 'required|email|max:255',
             'Telefon' => 'nullable|string|max:50',
-            'Nachricht' => 'required|string',
+            'Nachricht' => $nachrichtPflicht ? 'required|string' : 'nullable|string',
             'datenverarbeitung' => 'required|accepted',
             'site' => 'required|string|max:2048',
             'Datei' => 'nullable|file|max:10240|mimes:pdf,jpg,png,zip,doc,docx,xls,xlsx',
-        ]);
+        ];
+        if ($feldWebsite) {
+            $regeln['Website'] = 'nullable|string|max:2048';
+        }
+        $validated = $request->validate($regeln);
 
         $kontakt = new Kontaktformular;
         $kontakt->name = $validated['Name'];
         $kontakt->email = $validated['Email'];
         $kontakt->telefon = $validated['Telefon'] ?? null;
-        $kontakt->nachricht = $validated['Nachricht'];
+        $kontakt->nachricht = $nachricht;
+        if ($feldWebsite) {
+            $website = trim((string) ($validated['Website'] ?? ''));
+            $kontakt->website = $website === '' ? null : str_replace(["\r", "\n"], ' ', $website);
+        }
         $kontakt->datenverarbeitung = (bool) $validated['datenverarbeitung'];
         $kontakt->url = SiteAdresse::aus($validated['site'])->ohneKlickIds();
 

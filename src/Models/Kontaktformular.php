@@ -25,6 +25,7 @@ class Kontaktformular extends Model
         'name',
         'email',
         'telefon',
+        'website',
         'nachricht',
         'datenverarbeitung',
         'file_name',

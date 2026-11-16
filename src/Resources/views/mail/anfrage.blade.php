@@ -19,10 +19,18 @@
             <td>{{ $kontakt->telefon }}</td>
         </tr>
     @endif
-    <tr>
-        <td><b>Mitteilung:</b></td>
-        <td>{{ $kontakt->nachricht }}</td>
-    </tr>
+    @if(!empty($kontakt->website))
+        <tr>
+            <td><b>Website:</b></td>
+            <td>{{ $kontakt->website }}</td>
+        </tr>
+    @endif
+    @if(trim((string) $kontakt->nachricht) !== '')
+        <tr>
+            <td><b>Mitteilung:</b></td>
+            <td>{{ $kontakt->nachricht }}</td>
+        </tr>
+    @endif
     @if($kontakt->file_name)
         <tr>
             <td><b>Datei:</b></td>

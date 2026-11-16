@@ -1062,8 +1062,13 @@ final class AnfrageHerkunftTest extends TestCase
     {
         $this->herkunftSpalteVorhanden();
 
-        // Stand vor der Herkunft-Migration herstellen (letzte Migration zurückrollen)
-        Artisan::call('migrate:rollback', ['--step' => 1, '--force' => true]);
+        // Stand vor der Herkunft-Migration herstellen (gezielt nur diese Migration zurückrollen,
+        // unabhängig von später hinzukommenden Migrationen)
+        Artisan::call('migrate:rollback', [
+            '--path' => dirname(__DIR__, 2).'/src/Database/Migrations/2026_10_26_120000_add_herkunft_to_kontaktformular_table.php',
+            '--realpath' => true,
+            '--force' => true,
+        ]);
         $this->assertFalse(Schema::hasColumn('kontaktformular', 'herkunft'), 'falsche Migration zurückgerollt');
 
         DB::table('kontaktformular')->insert([

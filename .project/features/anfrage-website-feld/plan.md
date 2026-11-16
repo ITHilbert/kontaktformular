@@ -4,14 +4,20 @@ Branch: `feature/anfrage-website-feld` (Paket-Repo kontaktformular) · Spec: `sp
 Spec und Plan selbst freigegeben (automode 2026-11-16-1519).
 
 ## Aufgaben
-- [ ] T1 (AK1–AK9, Randfälle) test-writer — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
-- [ ] T2 (AK1–AK9) [pro] Config-Schlüssel, Migration `website`, Controller, Model-`fillable`, Mail-Views — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
-- [ ] T3 (AK10, AK11) [junior] Vue-Komponente (Props, Feld, Label) und View `show.blade.php` — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
-- [ ] T4 (AK12) [junior] README — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
-- [ ] T5 NACHWEIS (Moderator): GATE-Log, Tests des Pakets, Vue-Komponente kompilieren und rendern
+- [x] T1 (AK1–AK9, Randfälle) test-writer — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
+- [x] T2 (AK1–AK9) [pro] Config-Schlüssel, Migration `website`, Controller, Model-`fillable`, Mail-Views — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
+- [x] T3 (AK10, AK11) [junior] Vue-Komponente (Props, Feld, Label) und View `show.blade.php` — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
+- [x] T4 (AK12) [junior] README — Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`
+- [x] T5 NACHWEIS (Moderator): GATE-Log, Tests des Pakets, Vue-Komponente kompilieren und rendern
 - [ ] T6 REVIEW am Ende des Stapels (neue Migration, Verhalten)
 
 Bestehende Tests: `tests/Feature/KontaktformularTest.php`, `tests/Feature/AnfrageBccTest.php`, `tests/Feature/AnfrageHerkunftTest.php`, `tests/Feature/MailversandFehlerTest.php`
 
 ## Stand
-Spec geschrieben, Tests offen.
+T1–T5 erledigt (Coder af25ff49211f7a588 als ein Lauf für T2–T4: HANDOFF wegen Bestandstest, danach test-writer a87a77a824a7ad3c3 behoben). Paket-Suite 721 grün. Review am Ende des Stapels.
+
+Offener Punkt af25ff49211f7a588 (Bestandstest Randfall 8 rot wegen `--step 1`): AK-fremd, Test fachlich falsch → test-writer a87a77a824a7ad3c3 angepasst (migrate:rollback --path)
+Abweichung af25ff49211f7a588: keine (Fehlalarm: Abweichungen-Zeile des Berichts lautet „keine“)
+Annahme im Code: keine
+Echtlauf: Vue-Komponente per vue-template-compiler kompiliert und gerendert (Vue 2.7): Standard ohne Website-Feld, Nachricht required; feldWebsite → Feld `Website` (type text, inputmode url, maxlength 2048, ohne required); nachrichtPflicht=false → Textarea ohne required, Label „Ihre Nachricht (optional)“. Layout: entfällt (keine Messung nötig, keine neue Seite).
+Review: am Ende des Laufs (neue Migration, Verhalten).
