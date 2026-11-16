@@ -21,3 +21,10 @@ Abweichung af25ff49211f7a588: keine (Fehlalarm: Abweichungen-Zeile des Berichts 
 Annahme im Code: keine
 Echtlauf: Vue-Komponente per vue-template-compiler kompiliert und gerendert (Vue 2.7): Standard ohne Website-Feld, Nachricht required; feldWebsite → Feld `Website` (type text, inputmode url, maxlength 2048, ohne required); nachrichtPflicht=false → Textarea ohne required, Label „Ihre Nachricht (optional)“. Layout: entfällt (keine Messung nötig, keine neue Seite).
 Review 0/2: 2 muss, 1 sollte, 0 kann — nicht freigegeben (Reviewer acc78edd462b7acf5). Behoben: AK12 README-Satz zur eigenen Kopie der Komponente (Test geschärft a9ce2301312202bc1, README a936b4d52b67f8ca7); Risiko-Fund übernommen (Spec-Kopfzeile `kritisch`, kein Code betroffen). sollte → Task #1325, Altlast → #1327. Nachprüfung folgt.
+
+## Nachbesserung 2026-11-16 (automode, Stapel 2): #1325, #1327
+Branch `fix/nachricht-trim-array` (Paket-Repo, von `main`). Spec-Lücken AK13, AK14 selbst freigegeben (Task-Empfehlung A bzw. Task-Abnahme).
+- [x] T9 test-writer (AK13, AK14) — Tests: `tests/Feature/AnfrageNachrichtRandTest.php`
+- [x] T10 [pro] (AK13, AK14) Controller `anfrage()`, README — Tests: `tests/Feature/AnfrageNachrichtRandTest.php`
+Bestehende Tests: `tests/Feature/AnfrageWebsiteFeldTest.php`, `tests/Feature/KontaktformularTest.php`, `tests/Feature/AnfrageBccTest.php`, `tests/Feature/MailversandFehlerTest.php`
+Review: entfällt (Bugfix/Spec-Lücke ohne Sicherheitsbezug, kleine Änderung am Controller; Rule agent-lifecycle.md)
