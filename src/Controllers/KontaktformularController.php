@@ -31,7 +31,12 @@ final class KontaktformularController extends Controller
         $nachrichtPflicht = (bool) (config('kontaktformular.nachricht_pflicht') ?? true);
         $feldWebsite = (bool) config('kontaktformular.feld_website');
 
-        $nachricht = trim((string) $request->input('Nachricht', ''));
+        $nachrichtRoh = $request->input('Nachricht', '');
+        if ($nachrichtRoh !== null && ! is_string($nachrichtRoh)) {
+            return redirect()->route('danke_bot_formular');
+        }
+
+        $nachricht = trim((string) $nachrichtRoh);
         if (($nachrichtPflicht || $nachricht !== '') && (strlen($nachricht) < 10 || strpos($nachricht, ' ') === false)) {
             return redirect()->route('danke_bot_formular');
         }

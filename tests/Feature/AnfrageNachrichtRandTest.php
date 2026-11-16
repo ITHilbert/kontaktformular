@@ -7,6 +7,7 @@ namespace ITHilbert\Kontaktformular\Tests\Feature;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Testing\TestResponse;
 use ITHilbert\Kontaktformular\Mail\Anfrage;
 use ITHilbert\Kontaktformular\Tests\TestCase;
 
@@ -67,6 +68,18 @@ final class AnfrageNachrichtRandTest extends TestCase
         ], $aenderungen);
     }
 
+    /**
+     * Setzt vor jedem POST den Rate-Limiter (Cache) zurück, die Route behält ihr throttle:6,1.
+     *
+     * @param  array<string, mixed>  $daten
+     */
+    private function sende(array $daten): TestResponse
+    {
+        $this->app['cache']->store()->flush();
+
+        return $this->post(route('anfrage'), $daten);
+    }
+
     private function gespeicherteNachricht(): mixed
     {
         return DB::table('kontaktformular')->orderByDesc('id')->value('nachricht');
@@ -114,7 +127,7 @@ final class AnfrageNachrichtRandTest extends TestCase
             // Gegenprobe: gültige Nachricht wird gespeichert und verschickt
             $zeilen = DB::table('kontaktformular')->count();
             $mails = Mail::sent(Anfrage::class)->count();
-            $this->post(route('anfrage'), $this->anfrage())->assertRedirect(route('danke_formular'));
+            $this->sende($this->anfrage())->assertRedirect(route('danke_formular'));
             $this->assertSame($zeilen + 1, DB::table('kontaktformular')->count());
             $this->assertSame($mails + 1, Mail::sent(Anfrage::class)->count());
 
@@ -122,7 +135,7 @@ final class AnfrageNachrichtRandTest extends TestCase
             $mails++;
 
             foreach ([['a'], ['a', 'b'], ['x' => ['y']], []] as $wert) {
-                $this->post(route('anfrage'), $this->anfrage(['Nachricht' => $wert]))
+                $this->sende($this->anfrage(['Nachricht' => $wert]))
                     ->assertRedirect(route('danke_bot_formular'));
 
                 $this->assertSame($zeilen, DB::table('kontaktformular')->count(), 'Datensatz trotz Liste');
