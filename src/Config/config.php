@@ -19,6 +19,10 @@ return [
     // Herkunft (UTM, Klick-ID, Referrer) erfassen und mit der Anfrage speichern.
     // Aus bei false, 0, off, no oder leerem Wert; sonst an (Standard).
     'herkunft_erfassen' => filter_var(env('KONTAKTFORMULAR_HERKUNFT_ERFASSEN', true), FILTER_VALIDATE_BOOL),
+    // Optionales Feld "Website" im Formular (Spalte `website`, Migration nötig). Standard aus.
+    'feld_website' => filter_var(env('KONTAKTFORMULAR_FELD_WEBSITE', false), FILTER_VALIDATE_BOOL),
+    // Nachricht ist Pflichtfeld (Standard an). Aus: Anfrage auch ohne Nachricht möglich.
+    'nachricht_pflicht' => filter_var(env('KONTAKTFORMULAR_NACHRICHT_PFLICHT', true), FILTER_VALIDATE_BOOL),
     // Storage-Disk für Anhänge (Pfad `kontaktformular/<hash>.zip` auf der Disk). Nur Disks mit lokalem Pfad.
     'disk' => env('KONTAKTFORMULAR_DISK', 'local'),
     // Löschen alter Anhänge täglich im Scheduler einplanen.

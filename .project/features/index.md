@@ -1,4 +1,5 @@
 ## In Arbeit
+- [anfrage-website-feld](anfrage-website-feld/spec.md) — #1312 optionales Feld „Adresse Ihrer Website“, Nachricht als Kann-Angabe (per Config)
 - [anhaenge-disk](anhaenge-disk/spec.md) — Anhänge über die Storage-Disk, Löschung eingeplant (Dashboard #119)
 - [csrf-token](csrf-token/spec.md) — #120 CSRF-Token vor dem Absenden auffrischen (Token-Route, Vue-Komponente)
 
