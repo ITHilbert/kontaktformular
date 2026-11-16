@@ -15,3 +15,5 @@ Randfall 2 | "nachricht_pflicht=false und Nachricht nur Leerzeichen" | tests/Fea
 Randfall 3 | "feld_website=true ohne ausgeführte Migration" | tests/Feature/AnfrageWebsiteFeldTest.php::test_feld_website_an_ohne_migration_wirft_datenbankfehler_beim_speichern
 Randfall 4 | "Bestehende Datensätze" | tests/Feature/AnfrageWebsiteFeldTest.php::test_bestehende_datensaetze_behalten_website_null_ohne_nachbefuellen
 Randfall 5 | "Mail-Betreff, Absender, Reply-To und Zeilen unverändert" | tests/Feature/AnfrageWebsiteFeldTest.php::test_mail_zeigt_website_direkt_nach_telefon_und_vor_mitteilung_in_html_und_text
+AK13 | "Gespeicherte Nachricht ist getrimmt" | tests/Feature/AnfrageNachrichtRandTest.php::test_gespeicherte_nachricht_ist_getrimmt_in_beiden_einstellungen, tests/Feature/AnfrageNachrichtRandTest.php::test_readme_nennt_das_trimmen_der_nachricht
+AK14 | "Nachricht keine Zeichenkette" | tests/Feature/AnfrageNachrichtRandTest.php::test_nachricht_als_liste_oder_nicht_zeichenkette_leitet_zur_bot_seite
