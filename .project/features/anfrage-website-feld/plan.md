@@ -20,4 +20,4 @@ Offener Punkt af25ff49211f7a588 (Bestandstest Randfall 8 rot wegen `--step 1`): 
 Abweichung af25ff49211f7a588: keine (Fehlalarm: Abweichungen-Zeile des Berichts lautet „keine“)
 Annahme im Code: keine
 Echtlauf: Vue-Komponente per vue-template-compiler kompiliert und gerendert (Vue 2.7): Standard ohne Website-Feld, Nachricht required; feldWebsite → Feld `Website` (type text, inputmode url, maxlength 2048, ohne required); nachrichtPflicht=false → Textarea ohne required, Label „Ihre Nachricht (optional)“. Layout: entfällt (keine Messung nötig, keine neue Seite).
-Review: am Ende des Laufs (neue Migration, Verhalten).
+Review 0/2: 2 muss, 1 sollte, 0 kann — nicht freigegeben (Reviewer acc78edd462b7acf5). Behoben: AK12 README-Satz zur eigenen Kopie der Komponente (Test geschärft a9ce2301312202bc1, README a936b4d52b67f8ca7); Risiko-Fund übernommen (Spec-Kopfzeile `kritisch`, kein Code betroffen). sollte → Task #1325, Altlast → #1327. Nachprüfung folgt.

@@ -658,9 +658,16 @@ final class AnfrageWebsiteFeldTest extends TestCase
             'feld_website', 'KONTAKTFORMULAR_FELD_WEBSITE',
             'nachricht_pflicht', 'KONTAKTFORMULAR_NACHRICHT_PFLICHT',
             'feld-website', 'nachricht-pflicht',
-            '`website`', 'migrate', 'Bot', 'eigene Kopie', 'Datenschutzerklärung',
+            '`website`', 'migrate', 'Bot', 'Datenschutzerklärung',
         ] as $begriff) {
             $this->assertStringContainsString($begriff, $readme, "README nennt '{$begriff}' nicht");
         }
+
+        // Hinweis: Hosts mit eigener Kopie der Komponente bauen das Feld selbst ein
+        $this->assertMatchesRegularExpression(
+            '/eigene[rn]? Kopie der (?:Vue-)?Komponente.{0,300}selbst|Komponente\\s+(?:in |als )?eigene[rn]? Kopie.{0,300}selbst/su',
+            $readme,
+            'README sagt nicht, dass Hosts mit eigener Kopie der Komponente das Feld (die Props) selbst einbauen'
+        );
     }
 }

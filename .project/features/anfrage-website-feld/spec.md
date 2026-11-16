@@ -1,6 +1,6 @@
 # Feature: Optionales Feld „Adresse Ihrer Website“ und Nachricht als Kann-Angabe (per Config)
 
-Dashboard-Task #1312 (kontaktformular). Risiko: normal.
+Dashboard-Task #1312 (kontaktformular). Risiko: kritisch — Kundendaten (neue personenbezogene Angabe, gespeichert und per Mail versendet); nach Review-Fund hochgestuft (automode, selbst entschieden).
 
 ## Ausgangslage
 Das Formular verlangt eine Nachricht (`required`, dazu eine Bot-Heuristik: mindestens 10 Zeichen und ein Leerzeichen, sonst Bot-Danke-Seite). Ein Feld für die Website des Anfragenden fehlt; die Spalte `url` speichert die Herkunftsseite (`site`), nicht die Website des Kunden. Anlass: Marketing-Briefing homepage-betreuung.com — Betreiber kleiner Websites können ihr Problem schwer aufschreiben, die Adresse der Website ist für die Erstanalyse wichtiger als ein langer Text. Beide Neuerungen sind per Config schaltbar; die Standards lassen alle bestehenden Hosts unverändert.
