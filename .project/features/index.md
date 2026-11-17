@@ -1,5 +1,4 @@
 ## In Arbeit
-- [webmcp-formular](webmcp-formular/spec.md) — #1425 WebMCP-Attribute (toolname, tooldescription, toolparamdescription) am Formular für KI-Agenten
 - [anfrage-website-feld](anfrage-website-feld/spec.md) — #1312 optionales Feld „Adresse Ihrer Website“, Nachricht als Kann-Angabe (per Config)
 - [anhaenge-disk](anhaenge-disk/spec.md) — Anhänge über die Storage-Disk, Löschung eingeplant (Dashboard #119)
 - [csrf-token](csrf-token/spec.md) — #120 CSRF-Token vor dem Absenden auffrischen (Token-Route, Vue-Komponente)
@@ -21,6 +20,7 @@
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
+- [webmcp-formular](webmcp-formular/spec.md) — #1425 WebMCP-Attribute am Formular für KI-Agenten (toolname, tooldescription, toolparamdescription, Einwilligung per JS) — gemergt 2026-11-17 (2.4.0)
 - [mailversand](mailversand/spec.md) — #316 Versandfehler nach gespeicherter Anfrage: Danke-Seite statt 500, Fehler gemeldet (2026-11-02)
 - [herkunft-schalter](herkunft-schalter/spec.md) — #110 Herkunftserfassung per Config abschaltbar (`herkunft_erfassen`) (2026-11-02)
 - [danke-seiten-robots](danke-seiten-robots/plan.md) — Danke-Seiten bringen ihr Robots-Meta selbst mit, keine Host-View `header.robots_disallow` mehr nötig (2026-10-27)
