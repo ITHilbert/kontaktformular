@@ -20,6 +20,7 @@
 - Eigene `pint.json` fürs Paket (Host-Preset meldet Paketstil)
 
 ## Fertig
+- [webmcp-formular](webmcp-formular/spec.md) — #1425 WebMCP-Attribute am Formular für KI-Agenten (toolname, tooldescription, toolparamdescription, Einwilligung per JS) — gemergt 2026-11-17 (2.4.0)
 - [mailversand](mailversand/spec.md) — #316 Versandfehler nach gespeicherter Anfrage: Danke-Seite statt 500, Fehler gemeldet (2026-11-02)
 - [herkunft-schalter](herkunft-schalter/spec.md) — #110 Herkunftserfassung per Config abschaltbar (`herkunft_erfassen`) (2026-11-02)
 - [danke-seiten-robots](danke-seiten-robots/plan.md) — Danke-Seiten bringen ihr Robots-Meta selbst mit, keine Host-View `header.robots_disallow` mehr nötig (2026-10-27)

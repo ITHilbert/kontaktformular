@@ -1,31 +1,31 @@
 <template>
-    <form method="POST" v-bind:action="route" enctype="multipart/form-data" v-on:submit.prevent="absenden" ref="formular">
+    <form method="POST" v-bind:action="route" enctype="multipart/form-data" v-on:submit.prevent="absenden" ref="formular" v-bind:toolname="toolNameWert" v-bind:tooldescription="toolDescriptionWert">
         <input type="hidden" name="_token" v-bind:value="csrf" ref="token" />
         <input type="hidden" name="site" v-bind:value="currentUrl" />
 
-        <input type="text" name="fax" class="n-bot" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="text" name="fax" class="n-bot" tabindex="-1" autocomplete="off" aria-hidden="true" toolparamdescription="Spamschutz (Honeypot): immer leer lassen.">
         <label for="contact_name" class="font-weight-bold">Name *</label>
-        <input type="text" class="form-control" id="contact_name" name="Name" placeholder="Namen eingeben" autocomplete="name" required /><br>
+        <input type="text" class="form-control" id="contact_name" name="Name" placeholder="Namen eingeben" autocomplete="name" required toolparamdescription="Vollständiger Name der anfragenden Person." /><br>
 
         <label for="contact_email" class="font-weight-bold">E-Mail *</label>
-        <input type="email" class="form-control" id="contact_email" name="Email" placeholder="E-Mail eingeben" autocomplete="email" required /><br>
+        <input type="email" class="form-control" id="contact_email" name="Email" placeholder="E-Mail eingeben" autocomplete="email" required toolparamdescription="E-Mail-Adresse der anfragenden Person für die Antwort." /><br>
 
         <label for="contact_telefon" class="font-weight-bold">Telefonnummer</label>
-        <input type="tel" class="form-control" id="contact_telefon" name="Telefon" placeholder="Telefonnummer eingeben (optional)" autocomplete="tel" /><br>
+        <input type="tel" class="form-control" id="contact_telefon" name="Telefon" placeholder="Telefonnummer eingeben (optional)" autocomplete="tel" toolparamdescription="Telefonnummer der anfragenden Person (optional)." /><br>
 
         <template v-if="feldWebsite">
             <label for="contact_website" class="font-weight-bold">Adresse Ihrer Website</label>
-            <input type="text" inputmode="url" maxlength="2048" class="form-control" id="contact_website" name="Website" placeholder="Adresse Ihrer Website eingeben (optional)" autocomplete="url" /><br>
+            <input type="text" inputmode="url" maxlength="2048" class="form-control" id="contact_website" name="Website" placeholder="Adresse Ihrer Website eingeben (optional)" autocomplete="url" toolparamdescription="Adresse der Website der anfragenden Person (optional)." /><br>
         </template>
 
         <label for="contact_nachricht" class="font-weight-bold">{{ nachrichtPflicht ? 'Ihre Nachricht *' : 'Ihre Nachricht (optional)' }}</label>
-        <textarea rows="4" class="form-control" name="Nachricht" id="contact_nachricht" placeholder="Hier Ihre Nachricht eingeben ..." autocomplete="off" v-bind:required="nachrichtPflicht"></textarea><br>
+        <textarea rows="4" class="form-control" name="Nachricht" id="contact_nachricht" placeholder="Hier Ihre Nachricht eingeben ..." autocomplete="off" v-bind:required="nachrichtPflicht" toolparamdescription="Text der Nachricht bzw. Anfrage."></textarea><br>
 
         <label for="contact_file_upload" class="font-weight-bold">Datei Anhängen (optional)<br>
         <input type="file" name="Datei" id="contact_file_upload" /></label><br>
 
         <label class="font-weight-bold" for="contact_datenverarbeitung">
-            <input type="checkbox" name="datenverarbeitung" id="contact_datenverarbeitung" value="1" autocomplete="off" required>
+            <input type="checkbox" name="datenverarbeitung" id="contact_datenverarbeitung" value="1" autocomplete="off" ref="einwilligung" v-on:change="einwilligungGeaendert" toolparamdescription="Einwilligung in die Datenverarbeitung: Das muss die anfragende Person selbst ankreuzen, der Agent lässt es leer.">
             Ich stimme der Verarbeitung meiner Daten zu (<a href="https://www.it-hilbert.com/datenschutz">Datenschutz-Informationen)</a>*
         </label><br>
 
@@ -47,6 +47,14 @@ export default {
         'nachrichtPflicht': {
             type: Boolean,
             default: true,
+        },
+        'toolName': {
+            type: String,
+            default: '',
+        },
+        'toolDescription': {
+            type: String,
+            default: '',
         },
         'tokenRoute': {
             type: String,
@@ -72,7 +80,19 @@ export default {
                 this.absender.zuruecksetzen();
             }
         },
+        einwilligungGeaendert() {
+            this.$refs.einwilligung.setCustomValidity('');
+        },
         absenden() {
+            const einwilligung = this.$refs.einwilligung;
+            if (einwilligung) {
+                if (!einwilligung.checked) {
+                    einwilligung.setCustomValidity('Bitte stimmen Sie der Verarbeitung Ihrer Daten zu.');
+                    einwilligung.reportValidity();
+                    return;
+                }
+                einwilligung.setCustomValidity('');
+            }
             // Natives submit() löst kein erneutes submit-Event aus; das Feld wird direkt im DOM gesetzt,
             // v-bind:value="csrf" überschreibt es nicht, solange csrf unverändert bleibt.
             if (!this.absender) {
@@ -86,6 +106,12 @@ export default {
         },
     },
     computed: {
+        toolNameWert() {
+            return this.toolName || 'kontaktformular_senden';
+        },
+        toolDescriptionWert() {
+            return this.toolDescription || 'Sendet eine Kontaktanfrage. Pflichtfelder: Name, Email, Nachricht. Das Feld fax ist ein Spamschutz und bleibt leer. Die Zustimmung zur Datenverarbeitung muss die Person selbst geben (Einwilligung); der Agent hakt sie nicht an und sendet das Formular nicht selbst ab.';
+        },
         currentUrl() {
             return window.location.href;
             // or: return this.$route.path;

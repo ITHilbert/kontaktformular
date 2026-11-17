@@ -23,6 +23,9 @@ return [
     'feld_website' => filter_var(env('KONTAKTFORMULAR_FELD_WEBSITE', false), FILTER_VALIDATE_BOOL),
     // Nachricht ist Pflichtfeld (Standard an). Aus: Anfrage auch ohne Nachricht möglich.
     'nachricht_pflicht' => filter_var(env('KONTAKTFORMULAR_NACHRICHT_PFLICHT', true), FILTER_VALIDATE_BOOL),
+    // WebMCP: Name und Beschreibung des Formular-Tools für KI-Agenten im Browser; null = Standard der Komponente.
+    'webmcp_name' => env('KONTAKTFORMULAR_WEBMCP_NAME'),
+    'webmcp_beschreibung' => env('KONTAKTFORMULAR_WEBMCP_BESCHREIBUNG'),
     // Storage-Disk für Anhänge (Pfad `kontaktformular/<hash>.zip` auf der Disk). Nur Disks mit lokalem Pfad.
     'disk' => env('KONTAKTFORMULAR_DISK', 'local'),
     // Löschen alter Anhänge täglich im Scheduler einplanen.

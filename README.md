@@ -161,6 +161,17 @@ Route::get('kontaktformular/file/{hash}/{name}/{id}', [KontaktformularController
 
 **Update:** Hosts, die die Komponente (`src/Resources/Vue/kontaktformular.vue`) in ihr Bundle bauen, müssen nach dem Update neu bauen (`npm run production`).
 
+### WebMCP (KI-Agenten im Browser)
+
+Das Formular trägt deklarative WebMCP-Attribute: `toolname` und `tooldescription` am `<form>`, `toolparamdescription` an jedem Feld. Ein Agent kann das Formular so ausfüllen. Es gibt kein `toolautosubmit`: Der Agent sendet nie selbst, die Person klickt „Anfrage senden“.
+
+- Config `webmcp_name` (env `KONTAKTFORMULAR_WEBMCP_NAME`), Standard `null` = `kontaktformular_senden`. Wird als Prop `tool-name` durchgereicht.
+- Config `webmcp_beschreibung` (env `KONTAKTFORMULAR_WEBMCP_BESCHREIBUNG`), Standard `null` = deutsche Standardbeschreibung. Prop `tool-description`.
+- Das Feld `fax` (Honeypot, Spamschutz) bleibt leer. Die Einwilligung in die Datenverarbeitung muss die Person selbst geben; die Checkbox hat kein `required` mehr, `absenden()` prüft sie und zeigt sonst die Meldung per `setCustomValidity`/`reportValidity`.
+- Restrisiko: Füllt ein Agent den Honeypot trotzdem, gilt die Anfrage wie bisher als Bot.
+
+Hosts mit eigener Kopie der Komponente müssen die WebMCP-Attribute (toolname, tooldescription, toolparamdescription) selbst einbauen und neu bauen (`npm run production`).
+
 ## Views
 
 Im Hauptprojekt müssen `layouts.master` und `layouts.masterBot` existieren.
