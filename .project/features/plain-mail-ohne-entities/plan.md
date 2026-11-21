@@ -8,3 +8,7 @@ Review: entfällt (nur Plain-Mail-View, Klartext ohne HTML-Kontext, HTML-Teil un
 Bestehende Tests: tests/Feature/AnfrageHerkunftTest.php tests/Feature/AnfrageBccTest.php tests/Feature/AnfrageWebsiteFeldTest.php
 
 Stand: Spec geschrieben, Test-Writer als Nächstes.
+Offener Punkt a56e799177012cc8d: keine
+Abweichung a56e799177012cc8d: Fehlalarm: keine Abweichung gemeldet
+Echtlauf: keine Oberfläche; Mail-Render per Test (Text- und HTML-Teil), 552 Tests grün
+Stand: T1 umgesetzt, GATE grün.
